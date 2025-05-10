@@ -15,7 +15,7 @@ import os
 parser = argparse.ArgumentParser(description='Args for experiments')
 parser.add_argument('--n_samples',default=100,type=int,
     help='n_samples: Number of articles from the dataset')
-parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B-Instruct', type=str,
+parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B', type=str,
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
@@ -136,24 +136,26 @@ for i in range(n_samples):
     print(f"\n Question {i}")
     example = dataset["test"][i]
     question = example["question"]
-    prompt = ''' You are a math expert. Solve the following question and give only the final numeric answer. Format your output without any explanation exactly as: ## [answer].
+    prompt = f''' You are a math expert. Solve the following question and give only the final numeric answer. Format your output without any explanation exactly as: ## [answer].
         Do not include any other text.
         Question: {question}
         Answer: 
             '''
     print(prompt)
     answer = example["answer"]
-    res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.5, max_tokens=tokens_per_response, device=device)
-    entropies = compute_token_entropies(res["top_p_probs"])
-    cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
+    with torch.no_grad():
+        res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.5, max_tokens=tokens_per_response, device=device)
+
+        entropies = compute_token_entropies(res["top_p_probs"]) 
+        cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
 
     print_token_info(res, entropies, cosines, tokenizer)
 
     data_from_one_prompt = {
-        "top_p_tokens": res["top_p_tokens"],
-        "top_p_probs": res["top_p_probs"],
-        "top_p_logits": res["top_p_logits"],
-        "generated_tokens": res["generated_tokens"],
+        "top_p_tokens": [t.detach().cpu() for t in res["top_p_tokens"]],
+        "top_p_probs": [t.detach().cpu() for t in res["top_p_probs"]],
+        "top_p_logits": [t.detach().cpu() for t in res["top_p_logits"]],
+        "generated_tokens": res["generated_tokens"].detach().cpu(),
         "entropies": entropies,
         "cosines": cosines,
         "prompt": prompt #TODO add generated answer, parse answer (####), add expected answer
