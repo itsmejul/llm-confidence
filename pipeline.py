@@ -136,7 +136,11 @@ for i in range(n_samples):
     print(f"\n Question {i}")
     example = dataset["test"][i]
     question = example["question"]
-    prompt = question
+    prompt = ''' You are a math expert. Solve the following question and give only the final numeric answer. Format your output without any explanation exactly as: ## [answer].
+        Do not include any other text.
+        Question: {question}
+        Answer: 
+            '''
     print(prompt)
     answer = example["answer"]
     res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.5, max_tokens=tokens_per_response, device=device)
