@@ -136,7 +136,7 @@ for i in range(n_samples):
     print(f"\n Question {i}")
     example = dataset["test"][i]
     question = example["question"]
-    prompt = f''' You are a math expert. Solve the following question and give only the final numeric answer. Format your output without any explanation exactly as: ## [answer].
+    prompt = f''' You are a math expert. Solve the following question and give only the final numeric answer without any explanation. .
         Do not include any other text.
         Question: {question}
         Answer: 

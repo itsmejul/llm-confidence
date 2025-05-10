@@ -4,3 +4,4 @@ datasets>=3.5
 huggingface_hub>=0.30
 pandas>=2.2
 numpy>=2.2
+accelerate>=1.6
