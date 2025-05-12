@@ -40,12 +40,18 @@ print(args.reasoning_qwen)
 # Load Dataset
 #==========
 print(f"Loading Dataset {dataset_name} from Huggingface...")
-dataset = load_dataset(dataset_name, "main")
+#dataset = load_dataset(dataset_name, "main")
+from datasets import concatenate_datasets
+
+raw_dataset = load_dataset(dataset_name, "main")
+dataset = concatenate_datasets([raw_dataset[split] for split in raw_dataset.keys()])
+
 print("Loaded Dataset.")
 if n_samples == -1:
     n_samples = len(dataset)
 else:
     n_samples = min(n_samples, len(dataset)) # Cap dataset size
+print(n_samples)
 #==========
 # Load model
 #==========
@@ -144,7 +150,7 @@ full_results_data = {}
 correct = 0 #using for 
 for i in range(n_samples):
     print(f"\n Question {i}")
-    example = dataset["test"][i]
+    example = dataset[i]
     question = example["question"]
 
     #############################
@@ -173,7 +179,7 @@ for i in range(n_samples):
             add_generation_prompt=True,
             enable_thinking=False # Switches between thinking and non-thinking modes. Default is True.
             )
-        prompt = [text]
+        prompt = text
     #############################
     
     print(prompt)
