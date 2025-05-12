@@ -6,6 +6,8 @@ import argparse
 device_default = "cuda" if torch.cuda.is_available() else "cpu"
 from utils import average_pairwise_cosine_similarity_torch, generate_with_top_p, generate_with_top_p_batch, compute_avg_cosine_similarities, compute_token_entropies, print_token_info
 from itertools import combinations
+import json
+import re
 
 import numpy as np
 import os
@@ -23,7 +25,7 @@ parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
 parser.add_argument('--tokens_per_response', default=50, type=int,
     help='Generate n tokens in each response and then cut off')
-parser.add_argument('--reasoning_qwen', default='False', type=bool,
+parser.add_argument('--reasoning_qwen', default=False, type=bool,
                     help="True if qwen3-8b should use reasoning, False if not.")
 args = parser.parse_args()
 n_samples = args.n_samples
@@ -31,6 +33,8 @@ model_name = args.model_name
 dataset_name = args.dataset
 device = args.device
 tokens_per_response = args.tokens_per_response
+
+print(args.reasoning_qwen)
 
 #==========
 # Load Dataset
@@ -134,6 +138,7 @@ def generate_with_uncertainty(prompt, top_p=0.9, max_new_tokens=20):
 #if __name__ == "__main__":
 
 full_results_data = {}
+correct = 0 #using for 
 for i in range(n_samples):
     print(f"\n Question {i}")
     example = dataset["test"][i]
@@ -141,14 +146,15 @@ for i in range(n_samples):
 
     #############################
     prompt = f''' You are a math expert. Solve the question which is below delimited by tripple quotes.
-        Put your final answer within braces.
+        When you’re done, respond **only** with valid JSON of the form  
+        {{"answer": <float>}}  
         Question: """{question}"""
         '''
     
     if "qwen3-8b" in str(args.model_name).lower():
         print("Using qwen3-8b,", end="")
         messages = [{"role": "user", "content": prompt}]
-        if args.reasoning_qwen:
+        if args.reasoning_qwen is True:
             print(f"with reasoning: {args.reasoning_qwen}.")
             text = tokenizer.apply_chat_template(
             messages,
@@ -188,6 +194,44 @@ for i in range(n_samples):
     }
     full_results_data[f"prompt{i}"] = data_from_one_prompt
 
-    print(data_from_one_prompt["generated_tokens"])
+    #full output string
+    answer_string = ""
+    for i in data_from_one_prompt["generated_tokens"]:
+        answer_string += f" {tokenizer.decode(i)}"
+    print(f"{answer_string=}")
+    match = re.search(r'\{.*?\}', answer_string, re.DOTALL)
+    if not match:
+        raise ValueError(f"No JSON object found in output: {answer_string}")
+    model_answer = match.group(0)
+    print(f"{model_answer=}")
+
+    try:
+        answer_json_format = model_answer.replace(" ", "")
+        answer_json_format = answer_json_format.replace('answer":', 'answer": ')
+        print(f"{answer_json_format=}")
+        data = json.loads(answer_json_format)
+    except Exception as e:
+        print(f"Error parsing output.")
+        raise e
     
+    ground_truth_split = answer.split('####')
+    ground_truth = ground_truth_split[1].strip()
+
+    try:
+        ground_truth = float(ground_truth)
+        print(f"{ground_truth=}")
+        model_answer = float(data['answer'])
+        print(f"{model_answer=}")
+    except TypeError:
+        print("TypeError, continue.")
+        continue
+    if ground_truth == model_answer:
+        correct += 1
+
+
+
+accuracy = float(correct/n_samples)
+print(f"{accuracy=}")
+
+
 torch.save(full_results_data, "output.pt")

@@ -67,6 +67,8 @@ def generate_with_top_p(
       - top_p_logits: List[Tensor] of logits for those tokens
       - top_p_probs: List[Tensor] of their probabilities
     """
+    eos_token_id = tokenizer.eos_token_id
+    
     model.eval()
     if device is None:
         device = next(model.parameters()).device
@@ -98,6 +100,10 @@ def generate_with_top_p(
         top_probs_norm = top_probs / top_probs.sum()
         chosen_idx = torch.multinomial(top_probs_norm, 1).item()
         chosen_token = top_indices[chosen_idx].unsqueeze(0)
+
+        # Stop if EOS token is generated
+        if eos_token_id is not None and int(chosen_token) == eos_token_id:
+            break
 
         # Record
         generated.append(chosen_token)
