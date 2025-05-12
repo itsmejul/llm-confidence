@@ -21,8 +21,10 @@ parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default= 5, type=int,
+parser.add_argument('--tokens_per_response', default=50, type=int,
     help='Generate n tokens in each response and then cut off')
+parser.add_argument('--reasoning_qwen', default='False', type=bool,
+                    help="True if qwen3-8b should use reasoning, False if not.")
 args = parser.parse_args()
 n_samples = args.n_samples
 model_name = args.model_name
@@ -136,11 +138,35 @@ for i in range(n_samples):
     print(f"\n Question {i}")
     example = dataset["test"][i]
     question = example["question"]
-    prompt = f''' You are a math expert. Solve the following question and give only the final numeric answer without any explanation. .
-        Do not include any other text.
-        Question: {question}
-        Answer: 
-            '''
+
+    #############################
+    prompt = f''' You are a math expert. Solve the question which is below delimited by tripple quotes.
+        Put your final answer within braces.
+        Question: """{question}"""
+        '''
+    
+    if "qwen3-8b" in str(args.model_name).lower():
+        print("Using qwen3-8b,", end="")
+        messages = [{"role": "user", "content": prompt}]
+        if args.reasoning_qwen:
+            print(f"with reasoning: {args.reasoning_qwen}.")
+            text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=True # Switches between thinking and non-thinking modes. Default is True.
+            )
+        else:
+            print(f"with reasoning: {args.reasoning_qwen}.")
+            text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False # Switches between thinking and non-thinking modes. Default is True.
+            )
+        prompt = [text]
+    #############################
+    
     print(prompt)
     answer = example["answer"]
     with torch.no_grad():
@@ -161,4 +187,7 @@ for i in range(n_samples):
         "prompt": prompt #TODO add generated answer, parse answer (####), add expected answer
     }
     full_results_data[f"prompt{i}"] = data_from_one_prompt
+
+    print(data_from_one_prompt["generated_tokens"])
+    
 torch.save(full_results_data, "output.pt")
