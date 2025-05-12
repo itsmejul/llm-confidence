@@ -107,9 +107,12 @@ def generate_with_top_p(
 
         # Record
         generated.append(chosen_token)
-        top_p_tokens.append(top_indices)
-        top_p_logits.append(top_logits)
-        top_p_probs.append(top_probs)
+        #top_p_tokens.append(top_indices)
+        #top_p_logits.append(top_logits)
+        #top_p_probs.append(top_probs)
+        top_p_tokens.append(top_indices.cpu())
+        top_p_logits.append(top_logits.cpu())
+        top_p_probs.append(top_probs.cpu())
 
         # Append for next step
         input_ids = torch.cat([input_ids, chosen_token.unsqueeze(0)], dim=-1)

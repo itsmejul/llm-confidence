@@ -15,17 +15,17 @@ import os
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--n_samples',default=100,type=int,
+parser.add_argument('--n_samples',default=-1,type=int,
     help='n_samples: Number of articles from the dataset')
-parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B', type=str,
+parser.add_argument('--model_name', default='Qwen/Qwen3-8B', type=str,
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default=50, type=int,
+parser.add_argument('--tokens_per_response', default=800, type=int,
     help='Generate n tokens in each response and then cut off')
-parser.add_argument('--reasoning_qwen', default=False, type=bool,
+parser.add_argument('--reasoning_qwen', default=True, type=bool,
                     help="True if qwen3-8b should use reasoning, False if not.")
 args = parser.parse_args()
 n_samples = args.n_samples
@@ -42,7 +42,10 @@ print(args.reasoning_qwen)
 print(f"Loading Dataset {dataset_name} from Huggingface...")
 dataset = load_dataset(dataset_name, "main")
 print("Loaded Dataset.")
-
+if n_samples == -1:
+    n_samples = len(dataset)
+else:
+    n_samples = min(n_samples, len(dataset)) # Cap dataset size
 #==========
 # Load model
 #==========
@@ -175,6 +178,7 @@ for i in range(n_samples):
     
     print(prompt)
     answer = example["answer"]
+    torch.cuda.empty_cache()
     with torch.no_grad():
         res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.5, max_tokens=tokens_per_response, device=device)
 
@@ -227,11 +231,13 @@ for i in range(n_samples):
         continue
     if ground_truth == model_answer:
         correct += 1
-
+    torch.cuda.empty_cache()
 
 
 accuracy = float(correct/n_samples)
 print(f"{accuracy=}")
+from datetime import datetime
 
-
-torch.save(full_results_data, "output.pt")
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+output_file = f"output_{timestamp}.pt"
+torch.save(full_results_data, output_file)

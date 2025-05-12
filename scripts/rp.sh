@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=mml
-#SBATCH --partition=paula
-#SBATCH --gpus=a30
+#SBATCH --partition=clara
+#SBATCH --gpus=v100
 #SBATCH --ntasks=1
-#SBATCH --mem=8G
-#SBATCH --time=00:30:00
+#SBATCH --mem=32G
+#SBATCH --time=03:30:00
 #SBATCH -o /home/sc.uni-leipzig.de/gr15iped/jobfiles/log/%x.out-%j
 #SBATCH -e /home/sc.uni-leipzig.de/gr15iped/jobfiles/log/%x.err-%j
 
