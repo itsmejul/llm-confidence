@@ -68,3 +68,139 @@ model = AutoModelForCausalLM.from_pretrained(
     return_dict_in_generate=True,
 )
 print("Successfully loaded model.")
+
+# ========== 
+# Get the embedding layer of the model
+# ==========
+# Embedding layer is the layer of the model that takes tokens as inputs and outputs their vector embeddings
+# We will use those embeddings and compare their similarities 
+embedding_layer = model.get_input_embeddings()
+
+
+
+#if __name__ == "__main__":
+
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+full_results_data = {}
+correct = 0 #using for 
+for i in range(n_samples):
+    print(f"\n Question {i}")
+    example = dataset[i]
+    question = example["question"]
+
+    #############################
+    prompt = f''' You are a math expert. Solve the question which is below delimited by tripple quotes.
+        When you’re done, respond **only** with valid JSON of the form  
+        {{"answer": <float>}}  
+        Question: """{question}"""
+        '''
+    
+    if "qwen3-8b" in str(args.model_name).lower():
+        #print("Using qwen3-8b,", end="")
+        messages = [{"role": "user", "content": prompt}]
+        if args.reasoning_qwen is True:
+            #print(f"with reasoning: {args.reasoning_qwen}.")
+            text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=True # Switches between thinking and non-thinking modes. Default is True.
+            )
+        else:
+            #print(f"with reasoning: {args.reasoning_qwen}.")
+            text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False # Switches between thinking and non-thinking modes. Default is True.
+            )
+        prompt = text
+    #############################
+    
+    #print(prompt)
+    answer = example["answer"]
+    torch.cuda.empty_cache()
+    with torch.no_grad():
+        res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.5, max_tokens=tokens_per_response, device=device)
+
+        entropies = compute_token_entropies(res["top_p_probs"]) 
+        cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
+
+    #print_token_info(res, entropies, cosines, tokenizer)
+
+    data_from_one_prompt = {
+        "top_p_tokens": [t.detach().cpu() for t in res["top_p_tokens"]],
+        "top_p_probs": [t.detach().cpu() for t in res["top_p_probs"]],
+        "top_p_logits": [t.detach().cpu() for t in res["top_p_logits"]],
+        "generated_tokens": res["generated_tokens"].detach().cpu(),
+        "entropies": entropies,
+        "cosines": cosines,
+        "prompt": prompt #TODO add generated answer, parse answer (####), add expected answer
+    }
+
+    #full output string
+    answer_string = ""
+    for i in data_from_one_prompt["generated_tokens"]:
+        answer_string += f" {tokenizer.decode(i)}"
+    #print(f"{answer_string=}")
+    match = re.search(r'\{.*?\}', answer_string, re.DOTALL)
+    no_json = "false"
+    if not match:
+        #print(f"No JSON object found in output: {answer_string}")
+        answer_json_format = '{"answer": 0.0}' # fallback for when llm thinks too long (qwen at question 9 thinks over 800 tokens). TODO just skip that sample instead?
+        no_json = "true"
+    else:
+        model_answer = match.group(0)
+        #print(f"{model_answer=}")
+        answer_json_format = model_answer.replace(" ", "")
+        answer_json_format = answer_json_format.replace('answer":', 'answer": ')
+
+    #print(f"{answer_json_format=}")
+    parse_error = "false"
+    try:
+        data = json.loads(answer_json_format)
+    except Exception as e:
+        #print(f"Error parsing output.")
+        #raise e
+        parse_error = "true"
+        data = {"answer": 0.0} #fallback
+    
+    ground_truth_split = answer.split('####')
+    ground_truth = ground_truth_split[1].strip()
+
+    try:
+        ground_truth = float(ground_truth)
+        #print(f"{ground_truth=}")
+        model_answer = float(data['answer'])
+        #print(f"{model_answer=}")
+    except TypeError:
+        #print("TypeError, continue.")
+        continue
+    if no_json == "true":
+        data_from_one_prompt["correct"] = "jsonerror"
+    elif parse_error == "true":
+        data_from_one_prompt["correct"] = "parseerror"
+    elif ground_truth == model_answer:
+        correct += 1
+        data_from_one_prompt["correct"] = "true"
+    else: 
+        data_from_one_prompt["correct"] = "false"
+
+    full_results_data[f"prompt{i}"] = data_from_one_prompt
+    del res # to free up memory
+    del data_from_one_prompt
+    gc.collect()
+    torch.cuda.empty_cache()
+    print(i)
+    print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+    print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+    print(f"Max alloc: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
+    if (i%10 == 0):
+        output_file = f"output_{timestamp}.pt"
+        torch.save(full_results_data, output_file)
+        print("saved")
+
+accuracy = float(correct/n_samples)
+print(f"{accuracy=}")
