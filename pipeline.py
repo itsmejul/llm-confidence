@@ -1,5 +1,6 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
+import gc
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
@@ -59,8 +60,8 @@ print(f"Loading model {model_name} from Huggingface on device {device}...")
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    torch_dtype=torch.bfloat16, # faster than float 32
-    device_map=device,
+    torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu # faster than float 32
+    device_map="auto", # device, ,
     # Ensure the model config is set to output hidden states and scores
     output_hidden_states=True,
     # This flag makes the generate() method return additional info (see later)
@@ -211,18 +212,21 @@ for i in range(n_samples):
     print(f"{answer_string=}")
     match = re.search(r'\{.*?\}', answer_string, re.DOTALL)
     if not match:
-        raise ValueError(f"No JSON object found in output: {answer_string}")
-    model_answer = match.group(0)
-    print(f"{model_answer=}")
-
-    try:
+        print(f"No JSON object found in output: {answer_string}")
+        answer_json_format = '{"answer": 0.0}' # fallback for when llm thinks too long (qwen at question 9 thinks over 800 tokens). TODO just skip that sample instead?
+    else:
+        model_answer = match.group(0)
+        print(f"{model_answer=}")
         answer_json_format = model_answer.replace(" ", "")
         answer_json_format = answer_json_format.replace('answer":', 'answer": ')
-        print(f"{answer_json_format=}")
+
+    print(f"{answer_json_format=}")
+    try:
         data = json.loads(answer_json_format)
     except Exception as e:
         print(f"Error parsing output.")
-        raise e
+        #raise e
+        data = {"answer": 0.0} #fallback
     
     ground_truth_split = answer.split('####')
     ground_truth = ground_truth_split[1].strip()
@@ -237,7 +241,12 @@ for i in range(n_samples):
         continue
     if ground_truth == model_answer:
         correct += 1
+    del res # to free up memory
+    gc.collect()
     torch.cuda.empty_cache()
+    print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+    print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+    print(f"Max alloc: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
 
 
 accuracy = float(correct/n_samples)

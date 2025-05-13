@@ -120,7 +120,8 @@ def generate_with_top_p(
             [attention_mask, torch.ones((1, 1), dtype=attention_mask.dtype, device=device)],
             dim=1
         )
-
+    del logits, probs, top_logits, top_probs, sorted_probs, sorted_indices, cum_probs
+    torch.cuda.empty_cache()
     return {
         "generated_tokens": torch.cat(generated, dim=0),#TODO strings of tokens, not ids
         "top_p_tokens": top_p_tokens,
