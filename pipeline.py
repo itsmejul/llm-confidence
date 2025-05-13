@@ -272,10 +272,9 @@ if __name__ == "__main__":
         print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
         print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")
         print(f"Max alloc: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
-        if (i%10 == 0):
-            output_file = f"output_{timestamp}.pt"
-            torch.save(full_results_data, output_file)
-            print("saved")
+        output_file = f"output_{timestamp}.pt"
+        torch.save(full_results_data, output_file)
+        print("saved")
 
     accuracy = float(correct/n_samples)
     print(f"{accuracy=}")
