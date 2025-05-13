@@ -1,3 +1,6 @@
+import sys
+sys.stdout.reconfigure(line_buffering=True)
+
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import gc
