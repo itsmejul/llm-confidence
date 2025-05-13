@@ -217,8 +217,8 @@ if __name__ == "__main__":
 
         #full output string
         answer_string = ""
-        for i in data_from_one_prompt["generated_tokens"]:
-            answer_string += f" {tokenizer.decode(i)}"
+        for j in data_from_one_prompt["generated_tokens"]:
+            answer_string += f" {tokenizer.decode(j)}"
         #print(f"{answer_string=}")
         match = re.search(r'\{.*?\}', answer_string, re.DOTALL)
         no_json = "false"
