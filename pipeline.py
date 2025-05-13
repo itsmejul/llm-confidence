@@ -147,6 +147,9 @@ def generate_with_uncertainty(prompt, top_p=0.9, max_new_tokens=20):
 
 #if __name__ == "__main__":
 
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 full_results_data = {}
 correct = 0 #using for 
 for i in range(n_samples):
@@ -192,7 +195,7 @@ for i in range(n_samples):
         entropies = compute_token_entropies(res["top_p_probs"]) 
         cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
 
-    print_token_info(res, entropies, cosines, tokenizer)
+    #print_token_info(res, entropies, cosines, tokenizer)
 
     data_from_one_prompt = {
         "top_p_tokens": [t.detach().cpu() for t in res["top_p_tokens"]],
@@ -203,7 +206,6 @@ for i in range(n_samples):
         "cosines": cosines,
         "prompt": prompt #TODO add generated answer, parse answer (####), add expected answer
     }
-    full_results_data[f"prompt{i}"] = data_from_one_prompt
 
     #full output string
     answer_string = ""
@@ -211,9 +213,11 @@ for i in range(n_samples):
         answer_string += f" {tokenizer.decode(i)}"
     print(f"{answer_string=}")
     match = re.search(r'\{.*?\}', answer_string, re.DOTALL)
+    no_json = "false"
     if not match:
         print(f"No JSON object found in output: {answer_string}")
         answer_json_format = '{"answer": 0.0}' # fallback for when llm thinks too long (qwen at question 9 thinks over 800 tokens). TODO just skip that sample instead?
+        no_json = "true"
     else:
         model_answer = match.group(0)
         print(f"{model_answer=}")
@@ -221,11 +225,13 @@ for i in range(n_samples):
         answer_json_format = answer_json_format.replace('answer":', 'answer": ')
 
     print(f"{answer_json_format=}")
+    parse_error = "false"
     try:
         data = json.loads(answer_json_format)
     except Exception as e:
         print(f"Error parsing output.")
         #raise e
+        parse_error = "true"
         data = {"answer": 0.0} #fallback
     
     ground_truth_split = answer.split('####')
@@ -239,20 +245,27 @@ for i in range(n_samples):
     except TypeError:
         print("TypeError, continue.")
         continue
-    if ground_truth == model_answer:
+    if no_json == "true":
+        data_from_one_prompt["correct"] = "jsonerror"
+    elif parse_error == "true":
+        data_from_one_prompt["correct"] = "parseerror"
+    elif ground_truth == model_answer:
         correct += 1
+        data_from_one_prompt["correct"] = "true"
+    else: 
+        data_from_one_prompt["correct"] = "false"
+
+    full_results_data[f"prompt{i}"] = data_from_one_prompt
     del res # to free up memory
+    del data_from_one_prompt
     gc.collect()
     torch.cuda.empty_cache()
     print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
     print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")
     print(f"Max alloc: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
-
+    if (i%10 == 0):
+        output_file = f"output_{timestamp}.pt"
+        torch.save(full_results_data, output_file)
 
 accuracy = float(correct/n_samples)
 print(f"{accuracy=}")
-from datetime import datetime
-
-timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-output_file = f"output_{timestamp}.pt"
-torch.save(full_results_data, output_file)
