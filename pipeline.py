@@ -16,7 +16,7 @@ import os
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--n_samples',default=-1,type=int,
+parser.add_argument('--n_samples',default=11,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--model_name', default='Qwen/Qwen3-8B', type=str,
     help='model_name: Name or path of the huggingface LLM model to use.')
@@ -61,14 +61,19 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu # faster than float 32
-    device_map="auto", # device, ,
+    #device_map="auto", # device, ,
     # Ensure the model config is set to output hidden states and scores
     output_hidden_states=True,
     # This flag makes the generate() method return additional info (see later)
     return_dict_in_generate=True,
 )
+print("moving model to cuda...")
+model.to("cuda")
 print("Successfully loaded model.")
-
+# Ensure model is fully initialized
+print("Warming up model...")
+_ = model(tokenizer("Hello", return_tensors="pt").to(model.device)["input_ids"])
+print("Warmup complete.")
 
 # ========== 
 # Get the embedding layer of the model

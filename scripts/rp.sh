@@ -3,7 +3,7 @@
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
-#SBATCH --mem=8G
+#SBATCH --mem=32G
 #SBATCH --time=05:30:00
 #SBATCH -o /home/sc.uni-leipzig.de/gr15iped/jobfiles/log/%x.out-%j
 #SBATCH -e /home/sc.uni-leipzig.de/gr15iped/jobfiles/log/%x.err-%j

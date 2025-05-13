@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=rt2
+#SBATCH --job-name=rt3
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
@@ -30,6 +30,6 @@ else
 fi
 
 
-python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/test2.py
+python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/test3.py
 
 

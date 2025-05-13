@@ -6,7 +6,7 @@ import torch
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-device_default = "cuda" if torch.cuda.is_available() else "cpu"
+#device_default = "cuda" if torch.cuda.is_available() else "cpu"
 import torch.nn.functional as F
 from itertools import combinations
 
