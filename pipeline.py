@@ -165,10 +165,10 @@ for i in range(n_samples):
         '''
     
     if "qwen3-8b" in str(args.model_name).lower():
-        print("Using qwen3-8b,", end="")
+        #print("Using qwen3-8b,", end="")
         messages = [{"role": "user", "content": prompt}]
         if args.reasoning_qwen is True:
-            print(f"with reasoning: {args.reasoning_qwen}.")
+            #print(f"with reasoning: {args.reasoning_qwen}.")
             text = tokenizer.apply_chat_template(
             messages,
             tokenize=False,
@@ -176,7 +176,7 @@ for i in range(n_samples):
             enable_thinking=True # Switches between thinking and non-thinking modes. Default is True.
             )
         else:
-            print(f"with reasoning: {args.reasoning_qwen}.")
+            #print(f"with reasoning: {args.reasoning_qwen}.")
             text = tokenizer.apply_chat_template(
             messages,
             tokenize=False,
@@ -186,7 +186,7 @@ for i in range(n_samples):
         prompt = text
     #############################
     
-    print(prompt)
+    #print(prompt)
     answer = example["answer"]
     torch.cuda.empty_cache()
     with torch.no_grad():
@@ -211,25 +211,25 @@ for i in range(n_samples):
     answer_string = ""
     for i in data_from_one_prompt["generated_tokens"]:
         answer_string += f" {tokenizer.decode(i)}"
-    print(f"{answer_string=}")
+    #print(f"{answer_string=}")
     match = re.search(r'\{.*?\}', answer_string, re.DOTALL)
     no_json = "false"
     if not match:
-        print(f"No JSON object found in output: {answer_string}")
+        #print(f"No JSON object found in output: {answer_string}")
         answer_json_format = '{"answer": 0.0}' # fallback for when llm thinks too long (qwen at question 9 thinks over 800 tokens). TODO just skip that sample instead?
         no_json = "true"
     else:
         model_answer = match.group(0)
-        print(f"{model_answer=}")
+        #print(f"{model_answer=}")
         answer_json_format = model_answer.replace(" ", "")
         answer_json_format = answer_json_format.replace('answer":', 'answer": ')
 
-    print(f"{answer_json_format=}")
+    #print(f"{answer_json_format=}")
     parse_error = "false"
     try:
         data = json.loads(answer_json_format)
     except Exception as e:
-        print(f"Error parsing output.")
+        #print(f"Error parsing output.")
         #raise e
         parse_error = "true"
         data = {"answer": 0.0} #fallback
@@ -239,11 +239,11 @@ for i in range(n_samples):
 
     try:
         ground_truth = float(ground_truth)
-        print(f"{ground_truth=}")
+        #print(f"{ground_truth=}")
         model_answer = float(data['answer'])
-        print(f"{model_answer=}")
+        #print(f"{model_answer=}")
     except TypeError:
-        print("TypeError, continue.")
+        #print("TypeError, continue.")
         continue
     if no_json == "true":
         data_from_one_prompt["correct"] = "jsonerror"
@@ -260,12 +260,14 @@ for i in range(n_samples):
     del data_from_one_prompt
     gc.collect()
     torch.cuda.empty_cache()
+    print(i)
     print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
     print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")
     print(f"Max alloc: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
     if (i%10 == 0):
         output_file = f"output_{timestamp}.pt"
         torch.save(full_results_data, output_file)
+        print("saved")
 
 accuracy = float(correct/n_samples)
 print(f"{accuracy=}")
