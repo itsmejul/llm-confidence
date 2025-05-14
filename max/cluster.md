@@ -20,3 +20,6 @@ job id steht da
 squeue -u ag52peve
 PD = pending
 R = running
+
+cd logfiles/log
+cat ...
