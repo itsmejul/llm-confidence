@@ -264,6 +264,7 @@ if __name__ == "__main__":
             data_from_one_prompt["correct"] = "false"
 
         full_results_data[f"prompt{i}"] = data_from_one_prompt
+        print(full_results_data)
         del res # to free up memory
         del data_from_one_prompt
         gc.collect()
