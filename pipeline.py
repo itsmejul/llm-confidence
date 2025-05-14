@@ -19,7 +19,7 @@ import os
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--n_samples',default=11,type=int,
+parser.add_argument('--n_samples',default=300,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--model_name', default='Qwen/Qwen3-8B', type=str,
     help='model_name: Name or path of the huggingface LLM model to use.')
@@ -29,7 +29,7 @@ parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
 parser.add_argument('--tokens_per_response', default=800, type=int,
     help='Generate n tokens in each response and then cut off')
-parser.add_argument('--reasoning_qwen', default=True, type=bool,
+parser.add_argument('--reasoning_qwen', default=False, type=bool,
                     help="True if qwen3-8b should use reasoning, False if not.")
 args = parser.parse_args()
 n_samples = args.n_samples
