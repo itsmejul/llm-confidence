@@ -200,7 +200,8 @@ if __name__ == "__main__":
         with torch.no_grad():
             res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=tokens_per_response, device=device)
 
-            entropies = compute_token_entropies(res["top_p_probs"]) 
+            #entropies = compute_token_entropies(res["top_p_probs"]) 
+            entropies = compute_token_entropies(res["full_probs"]) 
             cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
 
         #print_token_info(res, entropies, cosines, tokenizer)
@@ -236,6 +237,9 @@ if __name__ == "__main__":
         parse_error = "false"
         try:
             data = json.loads(answer_json_format)
+            if "answer" not in data:
+                data = {"answer": 0.0}
+                parse_error = "true"
         except Exception as e:
             #print(f"Error parsing output.")
             #raise e

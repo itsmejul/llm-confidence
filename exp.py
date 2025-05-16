@@ -20,3 +20,5 @@ if isinstance(first_entry, dict):
             print()
 else:
     print(f"  {type(first_entry)}: {first_entry}")
+
+print(data["prompt92"]["correct"])

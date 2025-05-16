@@ -83,10 +83,18 @@ def generate_with_top_p(
     top_p_logits = []
     top_p_probs = []
 
+    full_logits = []
+    full_probs = []
+
+
     for _ in range(max_tokens):
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
         logits = outputs.logits[:, -1, :].squeeze(0)
         probs = torch.softmax(logits, dim=-1)
+
+        # save full distribution
+        full_logits.append(logits.detach().cpu())
+        full_probs.append(probs.detach().cpu())
 
         # Identify top-p set
         sorted_probs, sorted_indices = torch.sort(probs, descending=True)
@@ -127,6 +135,8 @@ def generate_with_top_p(
         "top_p_tokens": top_p_tokens,
         "top_p_logits": top_p_logits,
         "top_p_probs": top_p_probs,
+        "full_logits" : full_logits,
+        "full_probs" : full_probs,
     }
 
 
