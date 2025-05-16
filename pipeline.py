@@ -21,7 +21,7 @@ import os
 parser = argparse.ArgumentParser(description='Args for experiments')
 parser.add_argument('--n_samples',default=300,type=int,
     help='n_samples: Number of articles from the dataset')
-parser.add_argument('--model_name', default='Qwen/Qwen3-8B', type=str,
+parser.add_argument('--model_name', default='meta-llama/Llama-3.1-8B-Instruct', type=str,#meta-llama/Llama-3.1-8B-Instruct # Qwen/Qwen3-8B
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
@@ -198,7 +198,7 @@ if __name__ == "__main__":
         answer = example["answer"]
         torch.cuda.empty_cache()
         with torch.no_grad():
-            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.5, max_tokens=tokens_per_response, device=device)
+            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=tokens_per_response, device=device)
 
             entropies = compute_token_entropies(res["top_p_probs"]) 
             cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 

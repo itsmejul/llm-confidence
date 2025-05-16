@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=qwennoreason
+#SBATCH --job-name=llama
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
