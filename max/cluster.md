@@ -1,4 +1,4 @@
-ssh ag52peve@login01/02.sc.uni-leipzig.de
+ssh ag52peve@login01.sc.uni-leipzig.de
 dev ordner machen mkdir dev
 ssh keygen machen
 in github den noch hinzufügen
