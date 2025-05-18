@@ -4,7 +4,7 @@
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
 #SBATCH --mem=8G
-#SBATCH --time=00:30:00
+#SBATCH --time=01:30:00
 #SBATCH -o /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.out-%j
 #SBATCH -e /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.err-%j
 
@@ -24,6 +24,6 @@ else
 fi
 
 
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --model_name="Qwen/Qwen3-8B" --reasoning_qwen=False --n_samples=10
 
 
