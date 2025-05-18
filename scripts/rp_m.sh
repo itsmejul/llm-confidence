@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --job-name=mml
+#SBATCH --job-name=qwennoreasoning
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
-#SBATCH --mem=8G
-#SBATCH --time=01:30:00
+#SBATCH --mem=32G
+#SBATCH --time=01:00:00
 #SBATCH -o /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.out-%j
 #SBATCH -e /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.err-%j
 
