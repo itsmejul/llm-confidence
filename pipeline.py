@@ -151,7 +151,8 @@ if __name__ == "__main__":
         answer = example["answer"]
         torch.cuda.empty_cache()
         with torch.no_grad():
-            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=tokens_per_response, device=device)
+            #res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=tokens_per_response, device=device)
+            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=1, max_tokens=tokens_per_response, device=device)
 
             #entropies = compute_token_entropies(res["top_p_probs"]) 
             entropies = compute_token_entropies(res["full_probs"]) 
@@ -213,6 +214,7 @@ if __name__ == "__main__":
             #print(f"{ground_truth=}")
             model_answer = float(data['answer'])
             #print(f"{model_answer=}")
+            data_from_one_prompt["ground_truth"] = ground_truth
         except TypeError:
             #print("TypeError, continue.")
             continue
