@@ -115,7 +115,7 @@ if __name__ == "__main__":
         question = example["question"]
 
         #############################
-        prompt = f''' You are a math expert. Solve the question which is below delimited by tripple quotes.
+        prompt = f''' You are a math expert. Solve the question which is below delimited by triple quotes.
             When you’re done, respond **only** with valid JSON of the form  
             {{"answer": <float>}}  
             Question: """{question}"""
