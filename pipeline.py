@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
             #entropies = compute_token_entropies(res["top_p_probs"]) 
             entropies = compute_token_entropies(res["full_probs"]) 
-            cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
+            #cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
 
         #print_token_info(res, entropies, cosines, tokenizer)
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
             "generated_tokens": res["generated_tokens"].detach().cpu(),
             "decoded_tokens": res["decoded_tokens"],
             "entropies": entropies,
-            "cosines": cosines,
+            #"cosines": cosines,
             "prompt": prompt, #TODO add generated answer, parse answer (####), add expected answer
             "model": model_name
         }
