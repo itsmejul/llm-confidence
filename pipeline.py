@@ -8,7 +8,7 @@ from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
 device_default = "cuda" if torch.cuda.is_available() else "cpu"
-from utils import average_pairwise_cosine_similarity_torch, generate_with_top_p, generate_with_top_p_batch, compute_avg_cosine_similarities, compute_token_entropies, print_token_info
+from utils import generate_with_top_p, compute_avg_cosine_similarities, compute_token_entropies, load_model
 from itertools import combinations
 import json
 import re
@@ -29,16 +29,24 @@ parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
 parser.add_argument('--tokens_per_response', default=800, type=int,
     help='Generate n tokens in each response and then cut off')
-parser.add_argument('--reasoning_qwen', default=False, type=bool,
-                    help="True if qwen3-8b should use reasoning, False if not.")
+parser.add_argument('--reasoning_qwen', action='store_true',
+                    help="Use reasoning mode for qwen3-8b.")
+parser.add_argument('--no_reasoning_qwen', dest='reasoning_qwen', action='store_false')
+parser.set_defaults(reasoning_qwen=False)
+parser.add_argument('--verbose', default=False, type=bool,
+                    help="Print debug statements when set to True.")
+parser.add_argument('--local_dir', default='', type=str,
+                    help="Use when loading the model locally / debugging locally.")
 args = parser.parse_args()
 n_samples = args.n_samples
 model_name = args.model_name
 dataset_name = args.dataset
 device = args.device
 tokens_per_response = args.tokens_per_response
+verbose = args.verbose
+local_dir = args.local_dir
+reasoning_qwen = args.reasoning_qwen
 
-print(args.reasoning_qwen)
 
 #==========
 # Load Dataset
@@ -60,18 +68,22 @@ print(n_samples)
 # Load model
 #==========
 print(f"Loading model {model_name} from Huggingface on device {device}...")
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu # faster than float 32
-    #device_map="auto", # device, ,
-    # Ensure the model config is set to output hidden states and scores
-    output_hidden_states=True,
-    # This flag makes the generate() method return additional info (see later)
-    return_dict_in_generate=True,
-)
-print("moving model to cuda...")
-model.to("cuda")
+if local_dir != '':
+    model, tokenizer = load_model(model_name,local_dir, output_hidden_states=True, return_dict_in_generate=True)
+else:
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu # faster than float 32
+        #device_map="auto", # device, ,
+        # Ensure the model config is set to output hidden states and scores
+        output_hidden_states=True,
+        # This flag makes the generate() method return additional info (see later)
+        return_dict_in_generate=True,
+    )
+if device == "cuda":
+    print("moving model to cuda...")
+    model.to("cuda")
 print("Successfully loaded model.")
 # Ensure model is fully initialized
 print("Warming up model...")
@@ -85,70 +97,6 @@ print("Warmup complete.")
 # We will use those embeddings and compare their similarities 
 embedding_layer = model.get_input_embeddings()
 
-
-def generate_with_uncertainty(prompt, top_p=0.9, max_new_tokens=20):
-    """
-    Generates text from a prompt using a custom autoregressive loop.
-    At each generation step, forms the nucleus (top-p) token set,
-    retrieves their embeddings, computes average pairwise cosine similarity,
-    and then (greedily) appends the highest-probability token.
-
-    Args:
-        prompt (str): The initial text prompt.
-        top_p (float): Cumulative probability threshold for nucleus sampling.
-        max_new_tokens (int): Number of tokens to generate.
-
-    Returns:
-        dict: Contains:
-            - 'generated_text': The complete generated text.
-            - 'step_uncertainties': List of avg. cosine similarities per step.
-            - 'candidates': List of candidate lists (token+embedding) per step.
-    """
-    # Encode prompt and move to device
-    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
-
-    generation_candidates = []
-    step_uncertainties = []
-
-    for _ in range(max_new_tokens):
-        outputs = model(input_ids, output_hidden_states=True, return_dict=True)
-        logits = outputs.logits[0, -1]                  # (vocab_size,)
-        probs = F.softmax(logits, dim=-1)              # (vocab_size,)
-
-        # sort descending
-        sorted_probs, sorted_indices = torch.sort(probs, descending=True)
-        cumulative = torch.cumsum(sorted_probs, dim=0)
-
-        # nucleus mask: include all tokens up to cumulative ≥ top_p
-        mask = cumulative <= top_p
-        mask[0] = True  # always include highest-prob token
-        candidate_indices = sorted_indices[mask]
-
-        # gather candidate embeddings & tokens
-        step_candidates = []
-        candidate_embeddings = []
-        for idx in candidate_indices:
-            token_str = tokenizer.decode(idx.unsqueeze(0))
-            emb = embedding_layer.weight[int(idx)].detach().cpu()
-            step_candidates.append({"token": token_str, "embedding": emb})
-            candidate_embeddings.append(emb)
-
-        generation_candidates.append(step_candidates)
-
-        # compute uncertainty = avg pairwise cosine similarity
-        avg_cos_sim = average_pairwise_cosine_similarity_torch(candidate_embeddings)
-        step_uncertainties.append(avg_cos_sim)
-
-        # greedy selection: take the highest-prob token (sorted_indices[0])
-        chosen = sorted_indices[0].unsqueeze(0).unsqueeze(0)
-        input_ids = torch.cat([input_ids, chosen.to(device)], dim=-1)
-
-    generated_text = tokenizer.decode(input_ids[0])
-    return {
-        "generated_text": generated_text,
-        "step_uncertainties": step_uncertainties,
-        "candidates": generation_candidates,
-    }
 # ============================================================
 # 4. Example Usage & Output Uncertainty Measures
 # ============================================================
@@ -159,9 +107,10 @@ if __name__ == "__main__":
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
     full_results_data = {}
-    correct = 0 #using for 
+    correct = 0 #using for accuracy
     for i in range(n_samples):
-        print(f"\n Question {i}")
+        if verbose:
+            print(f"\n Question {i}")
         example = dataset[i]
         question = example["question"]
 
@@ -173,10 +122,12 @@ if __name__ == "__main__":
             '''
         
         if "qwen3-8b" in str(args.model_name).lower():
-            #print("Using qwen3-8b,", end="")
+            if verbose:
+                print("Using qwen3-8b,", end="")
             messages = [{"role": "user", "content": prompt}]
-            if args.reasoning_qwen is True:
-                #print(f"with reasoning: {args.reasoning_qwen}.")
+            if reasoning_qwen is True:
+                if verbose:
+                    print(f"with reasoning: {reasoning_qwen}.")
                 text = tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
@@ -184,7 +135,8 @@ if __name__ == "__main__":
                 enable_thinking=True # Switches between thinking and non-thinking modes. Default is True.
                 )
             else:
-                #print(f"with reasoning: {args.reasoning_qwen}.")
+                if verbose:
+                    print(f"with reasoning: {reasoning_qwen}.")
                 text = tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
@@ -194,7 +146,8 @@ if __name__ == "__main__":
             prompt = text
         #############################
         
-        #print(prompt)
+        if verbose:
+            print(f"{prompt=}")
         answer = example["answer"]
         torch.cuda.empty_cache()
         with torch.no_grad():
@@ -211,6 +164,7 @@ if __name__ == "__main__":
             "top_p_probs": [t.detach().cpu() for t in res["top_p_probs"]],
             "top_p_logits": [t.detach().cpu() for t in res["top_p_logits"]],
             "generated_tokens": res["generated_tokens"].detach().cpu(),
+            "decoded_tokens": res["decoded_tokens"],
             "entropies": entropies,
             "cosines": cosines,
             "prompt": prompt #TODO add generated answer, parse answer (####), add expected answer
@@ -218,22 +172,26 @@ if __name__ == "__main__":
 
         #full output string
         answer_string = ""
-        for j in data_from_one_prompt["generated_tokens"]:
-            answer_string += f" {tokenizer.decode(j)}"
-        #print(f"{answer_string=}")
+        for token in data_from_one_prompt["decoded_tokens"]:
+            answer_string += token
+        if verbose:
+            print(f"{answer_string=}")
         match = re.search(r'\{.*?\}', answer_string, re.DOTALL)
         no_json = "false"
         if not match:
-            #print(f"No JSON object found in output: {answer_string}")
+            if verbose:
+                print(f"No JSON object found in output: {answer_string}")
             answer_json_format = '{"answer": 0.0}' # fallback for when llm thinks too long (qwen at question 9 thinks over 800 tokens). TODO just skip that sample instead?
             no_json = "true"
         else:
             model_answer = match.group(0)
-            #print(f"{model_answer=}")
+            if verbose:
+                print(f"{model_answer=}")
             answer_json_format = model_answer.replace(" ", "")
             answer_json_format = answer_json_format.replace('answer":', 'answer": ')
 
-        #print(f"{answer_json_format=}")
+        if verbose:
+            print(f"{answer_json_format=}")
         parse_error = "false"
         try:
             data = json.loads(answer_json_format)
@@ -241,7 +199,8 @@ if __name__ == "__main__":
                 data = {"answer": 0.0}
                 parse_error = "true"
         except Exception as e:
-            #print(f"Error parsing output.")
+            if verbose:
+                print(f"Error parsing output.")
             #raise e
             parse_error = "true"
             data = {"answer": 0.0} #fallback

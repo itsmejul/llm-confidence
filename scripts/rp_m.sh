@@ -4,12 +4,13 @@
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
 #SBATCH --mem=32G
-#SBATCH --time=01:00:00
+#SBATCH --time=00:10:00
 #SBATCH -o /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.out-%j
 #SBATCH -e /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.err-%j
 
 VENV_DIR="$HOME/dev/math-ml/.venv"
 REQ_FILE="$HOME/dev/math-ml/requirements.txt"
+
 
 module load Python/3.12
 
@@ -23,7 +24,7 @@ else
 	echo "Warning: Requirements.txt not found"
 fi
 
-
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --model_name="Qwen/Qwen3-8B" --reasoning_qwen=False --n_samples=10
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --n_samples=10 --model_name=Qwen/Qwen3-8B --device=cuda --tokens_per_response=15 --no_reasoning_qwen
 
 
