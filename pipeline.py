@@ -33,8 +33,9 @@ parser.add_argument('--reasoning_qwen', action='store_true',
                     help="Use reasoning mode for qwen3-8b.")
 parser.add_argument('--no_reasoning_qwen', dest='reasoning_qwen', action='store_false')
 parser.set_defaults(reasoning_qwen=False)
-parser.add_argument('--verbose', default=False, type=bool,
+parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
+parser.set_defaults(verbose=False)
 parser.add_argument('--local_dir', default='', type=str,
                     help="Use when loading the model locally / debugging locally.")
 args = parser.parse_args()
@@ -155,7 +156,7 @@ if __name__ == "__main__":
             res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=1, max_tokens=tokens_per_response, device=device)
 
             #entropies = compute_token_entropies(res["top_p_probs"]) 
-            entropies = compute_token_entropies(res["full_probs"]) 
+            #entropies = compute_token_entropies(res["full_probs"]) 
             #cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight) 
 
         #print_token_info(res, entropies, cosines, tokenizer)
@@ -163,10 +164,10 @@ if __name__ == "__main__":
         data_from_one_prompt = {
             "top_p_tokens": [t.detach().cpu() for t in res["top_p_tokens"]],
             "top_p_probs": [t.detach().cpu() for t in res["top_p_probs"]],
-            "top_p_logits": [t.detach().cpu() for t in res["top_p_logits"]],
+            #"top_p_logits": [t.detach().cpu() for t in res["top_p_logits"]],
             "generated_tokens": res["generated_tokens"].detach().cpu(),
             "decoded_tokens": res["decoded_tokens"],
-            "entropies": entropies,
+            #"entropies": entropies,
             #"cosines": cosines,
             "prompt": prompt, #TODO add generated answer, parse answer (####), add expected answer
             "model": model_name

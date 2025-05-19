@@ -139,10 +139,10 @@ def generate_with_top_p(
         "generated_tokens": torch.cat(generated, dim=0), #token ids
         "decoded_tokens": answer_tokens, #decoded tokens
         "top_p_tokens": top_p_tokens,
-        "top_p_logits": top_p_logits,
+        #"top_p_logits": top_p_logits,
         "top_p_probs": top_p_probs,
-        "full_logits" : full_logits,
-        "full_probs" : full_probs,
+        #"full_logits" : full_logits,
+        #"full_probs" : full_probs,
     }
 
 
