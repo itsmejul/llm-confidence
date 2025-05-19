@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=qwennoreasoning_2
+#SBATCH --job-name=qwen_reasoning_10
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
@@ -25,6 +25,6 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --n_samples=100 --model_name=Qwen/Qwen3-8B --device=cuda --tokens_per_response=15 --no_reasoning_qwen
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --n_samples=10 --model_name=Qwen/Qwen3-8B --device=cuda --tokens_per_response=800
 
 
