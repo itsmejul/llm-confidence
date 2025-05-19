@@ -13,7 +13,7 @@ module load Python/3.12
 dann erst python -m venv .venv
 
 danach:
-ausfürhrne mit: sbatch scripts/rp.sh
+ausfürhrne mit: sbatch scripts/rp_m.sh
 
 job id steht da
 
