@@ -168,7 +168,8 @@ if __name__ == "__main__":
             "decoded_tokens": res["decoded_tokens"],
             "entropies": entropies,
             "cosines": cosines,
-            "prompt": prompt #TODO add generated answer, parse answer (####), add expected answer
+            "prompt": prompt, #TODO add generated answer, parse answer (####), add expected answer
+            "model": model_name
         }
 
         #full output string
