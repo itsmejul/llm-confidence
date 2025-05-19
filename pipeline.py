@@ -164,7 +164,7 @@ if __name__ == "__main__":
         data_from_one_prompt = {
             "top_p_tokens": [t.detach().cpu() for t in res["top_p_tokens"]],
             "top_p_probs": [t.detach().cpu() for t in res["top_p_probs"]],
-            "top_p_logits": [t.detach().cpu() for t in res["top_p_logits"]],
+            #"top_p_logits": [t.detach().cpu() for t in res["top_p_logits"]],
             "generated_tokens": res["generated_tokens"].detach().cpu(),
             "decoded_tokens": res["decoded_tokens"],
             #"entropies": entropies,
