@@ -33,8 +33,9 @@ parser.add_argument('--reasoning_qwen', action='store_true',
                     help="Use reasoning mode for qwen3-8b.")
 parser.add_argument('--no_reasoning_qwen', dest='reasoning_qwen', action='store_false')
 parser.set_defaults(reasoning_qwen=False)
-parser.add_argument('--verbose', default=False, type=bool,
+parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
+parser.set_defaults(verbose=False)
 parser.add_argument('--local_dir', default='', type=str,
                     help="Use when loading the model locally / debugging locally.")
 args = parser.parse_args()
