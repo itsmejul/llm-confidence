@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=qwen_reasoning_10_3
+#SBATCH --job-name=qwen_reasoning_10_4
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
