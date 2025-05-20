@@ -35,6 +35,7 @@ parser.add_argument('--no_reasoning_qwen', dest='reasoning_qwen', action='store_
 parser.set_defaults(reasoning_qwen=False)
 parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
+parser.add_argument('--not_verbose', action='store_false')
 parser.set_defaults(verbose=False)
 parser.add_argument('--local_dir', default='', type=str,
                     help="Use when loading the model locally / debugging locally.")
