@@ -12,23 +12,33 @@ def get_ground_truth(prompt:dict)->float:
         return None
     
     ground_truth = ground_truth.strip()
-    return float(ground_truth)
+    if "." in ground_truth or "," in ground_truth:
+        return float(ground_truth)
+    else:
+        return int(ground_truth)
 
-def get_llm_answer(prompt:dict)->float:
+def get_llm_answer(prompt:dict, prompting_technique:str)->float:
     try:
         raw_answer = ''.join(prompt['decoded_tokens'])
     except KeyError:
         return None
     
-    try:
-        _, answer = raw_answer.split('####')
-    except ValueError:
-        return None
+    if prompting_technique == "baseline": #few-shot
+        answer = raw_answer
+    else:
+        try:
+            _, answer = raw_answer.split('####')
+        except ValueError:
+            return None
 
     answer = answer.strip()
-    return raw_answer, float(answer)
+    if "." in answer or "," in answer:
+        answer = float(answer)
+    else:
+        answer = int(answer)
+    return raw_answer, answer
 
-def calculate_accuracy(exp_tensor:torch.tensor)->float:
+def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
     correct_samples = 0
     incorrect_samples = 0
     buggy_sample = 0
@@ -42,7 +52,7 @@ def calculate_accuracy(exp_tensor:torch.tensor)->float:
         
 
         #extract the generated answer by the LLM
-        _, numeric_answer = get_llm_answer(prompt)
+        _, numeric_answer = get_llm_answer(prompt, prompting_technique)
         if numeric_answer is None:
             buggy_sample +=1
             continue
@@ -64,14 +74,14 @@ def calculate_accuracy(exp_tensor:torch.tensor)->float:
     
     return accuracy
 
-def compute_entropy(exp_tensor, normalize=False)->dict:
+def compute_entropy(exp_tensor:torch.tensor, prompting_technique:str, normalize=False)->dict:
     entropy_dict = {}
     for prompt_key in exp_tensor.keys():
         prompt = exp_tensor[prompt_key]
 
         #identify the answer token indices
         answer_token_indices = []
-        raw_answer, llm_answer = get_llm_answer(prompt)
+        raw_answer, llm_answer = get_llm_answer(prompt, prompting_technique)
         llm_answer = str(llm_answer)
         reversed_raw_answer = raw_answer[::-1]
         for char_llm_answer in llm_answer:
