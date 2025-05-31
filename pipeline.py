@@ -1,44 +1,43 @@
 import sys
-sys.stdout.reconfigure(line_buffering=True)
+#sys.stdout.reconfigure(line_buffering=True) #TODO uncomment !!!
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import gc
-from datasets import load_dataset, concatenate_datasets
+from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-device_default = "cuda" if torch.cuda.is_available() else "cpu"
+device_default = "cpu"
+#device_default = "cuda" if torch.cuda.is_available() else "cpu" #TODO uncomment !!!
 from utils import generate_with_top_p, load_model
 from itertools import combinations
 import json
-import re
 import yaml
-
-import numpy as np
 import os
+
 #==========
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
 parser.add_argument('--experiment_name',default='test',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
-parser.add_argument('--n_samples',default=300,type=int,
+parser.add_argument('--n_samples',default=1,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
     help='start_index: Start index which the dataset questions will be split')
-parser.add_argument('--model_name', default='meta-llama/Llama-3.1-8B-Instruct', type=str,#meta-llama/Llama-3.1-8B-Instruct # Qwen/Qwen3-8B
+parser.add_argument('--model_name', default='THUDM/GLM-Z1-9B-0414', type=str,#meta-llama/Llama-3.1-8B-Instruct # Qwen/Qwen3-8B
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default=800, type=int,
+parser.add_argument('--tokens_per_response', default=10, type=int,
     help='Generate n tokens in each response and then cut off')
 parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
 parser.add_argument('--not_verbose', action='store_false')
 parser.set_defaults(verbose=False)
-parser.add_argument('--local_dir', default='', type=str,                               
+parser.add_argument('--local_dir', default='/home/max/Studium/Leipzig/Semster6/Math_and_ML/hf_models/GLM-4-Z1-9B-0414', type=str,                               
                     help="Use when loading the model locally / debugging locally.")
 parser.add_argument('--prompting_technique', default="baseline", type=str,
                     help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default, which are plain few-shot examples.")
@@ -115,7 +114,8 @@ if __name__ == "__main__":
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
     full_results_data = {}
-    metadata = {"model": model_name, "dataset": dataset_name, "device": device, "experiment_name": experiment_name, "tokens_per_response": tokens_per_response}
+    metadata = {"model": model_name, "dataset": dataset_name, "device": device, "experiment_name": experiment_name,
+                 "tokens_per_response": tokens_per_response, "prompting_technique":prompting_technique}
 
 
     #creat experiment directory

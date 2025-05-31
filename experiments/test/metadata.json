@@ -1,0 +1,7 @@
+{
+    "model": "THUDM/GLM-Z1-9B-0414",
+    "dataset": "openai/gsm8k",
+    "device": "cpu",
+    "experiment_name": "test",
+    "tokens_per_response": 10
+}
