@@ -1,4 +1,5 @@
 import torch
+import re
 
 def get_ground_truth(prompt:dict)->float:
     try:
@@ -25,6 +26,8 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
     
     if prompting_technique == "baseline": #few-shot
         answer = raw_answer
+        match = re.search(r"A:\s*(.*?)\s*<eos", answer)
+        answer = match.group(1).strip()
     else:
         try:
             _, answer = raw_answer.split('####')
@@ -112,8 +115,10 @@ def compute_entropy(exp_tensor:torch.tensor, prompting_technique:str, normalize=
     return entropy_dict
 
 def logit_uncertainty():
+    #TODO
     ...
 
 def cos_similarity():
+    #TODO
     ...
     

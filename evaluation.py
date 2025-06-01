@@ -8,7 +8,7 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='test',type=str,
+parser.add_argument('--experiment_name',default='real_test',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
 
 args = parser.parse_args()
@@ -47,7 +47,8 @@ df.to_csv(f"{experiment_path}/entropy_results.csv", index=False)
 
 
 try:
-    average_entropy = sum(entropy.items()) / len(entropy.items())
+    entropies_list = list(entropy.values())
+    average_entropy = sum(entropies_list) / len(entropies_list)
 except ZeroDivisionError:
      average_entropy = "Bug occured."
 
@@ -55,6 +56,7 @@ except ZeroDivisionError:
 #==========
 # Summary
 #==========
+print("SUMMARY")
 print(f"{model_name=}")
 print(f"{dataset=}")
 print(f"{prompting_technique}")
@@ -65,6 +67,6 @@ print(f"{average_entropy=}")
 
 evaluation_summary = {"accuracy": accuracy, "average_entropy": average_entropy}
 with open(f"{experiment_path}/evaluation_summary.json", "w") as f:
-        json.dump(metadata, f, indent=4)
+        json.dump(evaluation_summary, f, indent=4)
 print(f"Saved Evaluation Summary to: {experiment_path}/evaluation_summary.json")
 

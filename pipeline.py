@@ -19,28 +19,28 @@ import os
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='test',type=str,
+parser.add_argument('--experiment_name',default='real_test',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
-parser.add_argument('--n_samples',default=1,type=int,
+parser.add_argument('--n_samples',default=2,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
     help='start_index: Start index which the dataset questions will be split')
-parser.add_argument('--model_name', default='THUDM/GLM-Z1-9B-0414', type=str,#meta-llama/Llama-3.1-8B-Instruct # Qwen/Qwen3-8B
+parser.add_argument('--model_name', default='mistralai/Mistral-7B-v0.1', type=str,#meta-llama/Llama-3.1-8B-Instruct # Qwen/Qwen3-8B
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default=10, type=int,
+parser.add_argument('--tokens_per_response', default=15, type=int,
     help='Generate n tokens in each response and then cut off')
 parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
 parser.add_argument('--not_verbose', action='store_false')
 parser.set_defaults(verbose=False)
-parser.add_argument('--local_dir', default='/home/max/Studium/Leipzig/Semster6/Math_and_ML/hf_models/GLM-4-Z1-9B-0414', type=str,                               
+parser.add_argument('--local_dir', default='/home/max/Studium/Leipzig/Semster6/Math_and_ML/hf_models/mistralai/Mistral-7B-v0.1/', type=str,                               
                     help="Use when loading the model locally / debugging locally.")
 parser.add_argument('--prompting_technique', default="baseline", type=str,
-                    help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default, which are plain few-shot examples.")
+                    help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default: plain few-shot examples.")
 
 args = parser.parse_args()
 experiment_name = args.experiment_name
@@ -132,14 +132,15 @@ if __name__ == "__main__":
     system_prompt = ''
     with open(f"few_shot_examples/gsm8k_{prompting_technique}.yaml", "r") as f:
             prompt_examples = yaml.safe_load(f)
+    system_prompt += "Format:" + prompt_examples['format']
     for example in prompt_examples['fewshot']:
-        system_prompt += example["question"]
-        system_prompt += example["answer"] + "\n"
-    system_prompt += "\n" + prompt_examples["system_prompt"]
+        system_prompt += "Q: " + example["question"]
+        system_prompt += "A:" + example["answer"]
+    system_prompt += prompt_examples["system_prompt"]
     
-
+    print("Starting to generate...")
     for i,question in enumerate(questions):
-        prompt = system_prompt + "\n" + question
+        prompt = system_prompt + "Q: " + question
         answer = answers[i]
 
         torch.cuda.empty_cache()
@@ -164,7 +165,7 @@ if __name__ == "__main__":
         del data_from_one_prompt # to free up memory
         gc.collect()             # to free up memory
         torch.cuda.empty_cache() # to free up memory
-        print(f"Sample: {i}")
+        print(f"Sample {i}: done")
         print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
         print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")
         print(f"Max alloc: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")

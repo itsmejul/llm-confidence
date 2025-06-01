@@ -53,7 +53,7 @@ def generate_with_top_p(
     full_logits = []
     full_probs = []
 
-
+    chosen_tokens = '' #for stopping if <eos> is generated
     for _ in range(max_tokens):
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
         logits = outputs.logits[:, -1, :].squeeze(0)
@@ -73,11 +73,15 @@ def generate_with_top_p(
 
         # Sample
         top_probs_norm = top_probs / top_probs.sum()
-        chosen_idx = torch.multinomial(top_probs_norm, 1).item()
+        chosen_idx = torch.multinomial(top_probs_norm, 1).item()        
         chosen_token = top_indices[chosen_idx].unsqueeze(0)
+        decoded_chosen_tooken = tokenizer.decode(chosen_token)
+        chosen_tokens += decoded_chosen_tooken
 
         # Stop if EOS token is generated
         if eos_token_id is not None and int(chosen_token) == eos_token_id:
+            break
+        elif "<eos>" in chosen_tokens:
             break
 
         # Record
