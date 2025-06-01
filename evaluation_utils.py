@@ -22,7 +22,7 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
     try:
         raw_answer = ''.join(prompt['decoded_tokens'])
     except KeyError:
-        return None
+        return None, None
     
     if prompting_technique == "baseline": #few-shot
         answer = raw_answer
@@ -33,7 +33,7 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
             _, answer = raw_answer.split('####')
             answer = answer.replace('<eos','')
         except ValueError:
-            return None
+            return None, None
 
     answer = answer.strip()
     if "." in answer or "," in answer:
@@ -86,11 +86,15 @@ def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normaliz
         # identify the answer token indices
         answer_token_indices = []
         _, llm_answer = get_llm_answer(prompt, prompting_technique)
-        llm_answer = "{:.2f}".format(llm_answer)  # ensure consistent formatting
+        if llm_answer is None:
+            entropy_dict[prompt_key] = None
+            continue
+        if isinstance(llm_answer,float): llm_answer = "{:.2f}".format(llm_answer)  # ensure consistent formatting
+        else: llm_answer = str(llm_answer)   
         reverse_decoded_tokens = prompt['decoded_tokens'][::-1]
         used_indices = set()
 
-        for char in llm_answer[::-1]:  # reverse to match reversed token list
+        for char in str(llm_answer[::-1]):  # reverse to match reversed token list
             for idx, token in enumerate(reverse_decoded_tokens):
                 real_idx = len(reverse_decoded_tokens) - idx - 1
                 if real_idx in used_indices:
@@ -107,7 +111,11 @@ def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normaliz
             token_probs = prompt['top_p_probs'][idx]
             entropy = -torch.sum(token_probs * torch.log(token_probs + 1e-12)).item()
             if normalize:
-                entropy /= torch.log(torch.tensor(len(token_probs))).item()
+                denom = torch.log(torch.tensor(len(token_probs))).item()
+                if denom > 0: 
+                    entropy /= denom
+                else:
+                    entropy = 0.0 #catches cases where [top_p_probs] has length 1 and then log of 1 is 0.0 -> ZeroDivisionError
             entropy_per_token.append(entropy)
 
         average_entropy = sum(entropy_per_token) / len(entropy_per_token) if entropy_per_token else 0

@@ -8,7 +8,7 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='cot_test',type=str,
+parser.add_argument('--experiment_name',default='cod_test',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
 
 args = parser.parse_args()
@@ -45,11 +45,12 @@ entropy = compute_entropy(exp_tensor=results, prompting_technique=prompting_tech
 df = pd.DataFrame(list(entropy.items()), columns=["prompt_id", "entropy"])
 df.to_csv(f"{experiment_path}/entropy_results.csv", index=False)
 
-#TODO how many tokens were used
+#TODO how many tokens were used, inference time = latency would be interesting too
 
 try:
     entropies_list = list(entropy.values())
-    average_entropy = sum(entropies_list) / len(entropies_list)
+    cleaned_list = [x for x in entropies_list if x is not None]
+    average_entropy = sum(cleaned_list) / len(cleaned_list)
 except ZeroDivisionError:
      average_entropy = "Bug occured."
 
