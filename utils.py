@@ -217,19 +217,7 @@ def print_token_info(res, entropies, cosines, tokenizer, precision=2):
             row += f"|{tid_str:>{id_col_width}}, {logit_str:>{logit_col_width}}, {prob_str:>{prob_col_width}}"
         print(row)
 
-def load_model(model_name, local_dir="./models/llama3_70b", output_hidden_states=True, return_dict_in_generate=True):
-    import os
-    if os.path.exists(local_dir):
-        print(f"Loading model from local directory: {local_dir}")
-        tokenizer = AutoTokenizer.from_pretrained(local_dir)
-        model = AutoModelForCausalLM.from_pretrained(local_dir, torch_dtype="auto", output_hidden_states=output_hidden_states, return_dict_in_generate=return_dict_in_generate)
-    else:
-        print(f"Local directory not found. Downloading model '{model_name}' from Hugging Face Hub...")
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto", output_hidden_states=True)
-
-        os.makedirs(local_dir, exist_ok=True)
-        tokenizer.save_pretrained(local_dir)
-        model.save_pretrained(local_dir)
-        print(f"Model downloaded and saved locally to: {local_dir}")
+def load_model(model_name):
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto", output_hidden_states=True)
     return model, tokenizer
