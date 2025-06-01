@@ -46,6 +46,7 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
     correct_samples = 0
     incorrect_samples = 0
     buggy_sample = 0
+    correctness_dict = {}
     for prompt_key in exp_tensor.keys():
         prompt = exp_tensor[prompt_key]
         #extract the ground truth answer
@@ -59,24 +60,22 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
         _, numeric_answer = get_llm_answer(prompt, prompting_technique)
         if numeric_answer is None:
             buggy_sample +=1
+            correctness_dict[prompt_key] = "buggy"
             continue
 
         #compare LLM answer and ground truth
         if float(numeric_answer) == float(numeric_ground_truth):
             correct_samples += 1
+            correctness_dict[prompt_key] = "yes"
         else:
             incorrect_samples += 1
+            correctness_dict[prompt_key] = "no"
 
     prompt_count = len(exp_tensor) 
     n = prompt_count - buggy_sample
-    accuracy = 0
-    try:
-        accuracy = correct_samples / n
-    except ZeroDivisionError:
-        #in this case all samples would be buggy
-        return accuracy
+    accuracy = f"{correct_samples } / {n}"
     
-    return accuracy
+    return accuracy, correctness_dict
 
 def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normalize=False) -> dict:
     entropy_dict = {}
@@ -121,6 +120,29 @@ def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normaliz
         average_entropy = sum(entropy_per_token) / len(entropy_per_token) if entropy_per_token else 0
         entropy_dict[prompt_key] = average_entropy
     return entropy_dict
+
+def get_latency(exp_tensor: torch.tensor)->dict:
+    latency_dict = {}
+    for prompt_key in exp_tensor.keys():
+        prompt = exp_tensor[prompt_key]
+        try:
+            latency = prompt["latency"]
+        except KeyError:
+            latency = None
+        latency_dict[prompt_key] = latency
+    return latency_dict
+
+def get_tokens_per_prompt(exp_tensor: torch.tensor)->dict:
+    tokens_dict = {}
+    for prompt_key in exp_tensor.keys():
+        prompt = exp_tensor[prompt_key]
+        try:
+            tokens = len(prompt["decoded_tokens"])
+        except KeyError:
+            tokens = None
+        tokens_dict[prompt_key] = tokens
+    return tokens_dict
+
 
 def logit_uncertainty():
     #TODO

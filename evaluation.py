@@ -37,16 +37,27 @@ results = torch.load(output_tensor_path)
 #==========
 # Evaluation
 #==========
-from evaluation_utils import calculate_accuracy, compute_entropy
+from evaluation_utils import calculate_accuracy, compute_entropy, get_latency, get_tokens_per_prompt
 
-accuracy = calculate_accuracy(exp_tensor=results, prompting_technique=prompting_technique)
-
+accuracy, correctness_dict = calculate_accuracy(exp_tensor=results, prompting_technique=prompting_technique)
 entropy = compute_entropy(exp_tensor=results, prompting_technique=prompting_technique, normalize=True)
-df = pd.DataFrame(list(entropy.items()), columns=["prompt_id", "entropy"])
-df.to_csv(f"{experiment_path}/entropy_results.csv", index=False)
+latency_per_prompt = get_latency(exp_tensor=results)
+tokens_per_prompt = get_tokens_per_prompt(exp_tensor=results)
 
-#TODO how many tokens were used, inference time = latency would be interesting too
+df_correct = pd.DataFrame(list(correctness_dict.items()), columns=["prompt_id", "correct"])
+df_entropy = pd.DataFrame(list(entropy.items()), columns=["prompt_id", "entropy"])
+df_latency = pd.DataFrame(list(latency_per_prompt.items()), columns=["prompt_id", "latency"])
+df_tokens = pd.DataFrame(list(tokens_per_prompt.items()), columns=["prompt_id", "tokens_used"])
 
+# Merge all into a single dataframe on 'prompt_id'
+df_merged = df_entropy.merge(df_latency, on="prompt_id").merge(df_tokens, on="prompt_id").merge(df_correct, on="prompt_id")
+df_merged.to_csv(f"{experiment_path}/evaluation_results.csv", index=False)
+
+#==========
+# Compute average values
+#==========
+
+#Entropy over all samples except buggy ones
 try:
     entropies_list = list(entropy.values())
     cleaned_list = [x for x in entropies_list if x is not None]
@@ -54,6 +65,39 @@ try:
 except ZeroDivisionError:
      average_entropy = "Bug occured."
 
+#Entropy over all correct answered prompts
+df_correct = df_merged[df_merged["correct"] == "yes"]
+if len(df_correct) > 0:
+     average_entropy_correct = sum([df_correct['entropy']]) / len(df_correct)
+     average_entropy_correct = average_entropy_correct.item()
+else:
+     average_entropy_correct = "no correct samples"
+
+     
+
+#Entropy over all incorrect answered prompts
+df_incorrect = df_merged[df_merged["correct"] == "no"]
+if len(df_incorrect) > 0:
+     average_entropy_incorrect = sum([df_incorrect['entropy']]) / len(df_incorrect)
+     average_entropy_incorrect = average_entropy_incorrect.item()
+else:
+     average_entropy_incorrect = "no correct samples"
+
+#Tokens used
+try:
+    tokens_used_list = list(tokens_per_prompt.values())
+    cleaned_list = [x for x in tokens_used_list if x is not None]
+    average_tokens_used = sum(cleaned_list) / len(cleaned_list)
+except ZeroDivisionError:
+     average_tokens_used = "Bug occured."
+
+#Latency
+try:
+    latency_list = list(latency_per_prompt.values())
+    cleaned_list = [x for x in latency_list if x is not None]
+    average_latency = sum(cleaned_list) / len(cleaned_list)
+except ZeroDivisionError:
+     average_latency = "Bug occured."
 
 #==========
 # Summary
@@ -62,13 +106,24 @@ print("SUMMARY")
 print(f"{model_name=}")
 print(f"{dataset=}")
 print(f"{prompting_technique}")
+print(f"Samples: {len(results)}")
 print("---")
 print(f"{accuracy=}")
-print(f"Saved Entropies to: {experiment_path}/entropy_results.csv")
 print(f"{average_entropy=}")
+print(f"{average_entropy_correct=}")
+print(f"{average_entropy_incorrect=}")
 
-evaluation_summary = {"accuracy": accuracy, "average_entropy": average_entropy}
+evaluation_summary = {"samples": len(results),
+                       "accuracy": accuracy,
+                         "average_entropy": average_entropy,
+                          "average_entropy_correct_samples": average_entropy_correct,
+                           "average_entropy_incorrect_samples": average_entropy_incorrect,
+                           "average_tokens_used": average_tokens_used,
+                             "average_latency": average_latency}
+
 with open(f"{experiment_path}/evaluation_summary.json", "w") as f:
         json.dump(evaluation_summary, f, indent=4)
+
+print(f"Saved Evaluation Values to: {experiment_path}/evaluation_results.csv")
 print(f"Saved Evaluation Summary to: {experiment_path}/evaluation_summary.json")
 
