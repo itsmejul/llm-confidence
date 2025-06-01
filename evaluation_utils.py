@@ -27,7 +27,10 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
     if prompting_technique == "baseline": #few-shot
         answer = raw_answer
         match = re.search(r"A:\s*(.*?)\s*<eos", answer)
-        answer = match.group(1).strip()
+        if match:
+            answer = match.group(1).strip()
+        else:
+            return None, None
     else:
         try:
             _, answer = raw_answer.split('####')
@@ -37,8 +40,11 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
 
     answer = answer.strip()
     if "." in answer or "," in answer:
+        answer = answer.replace(",", "")
+        answer = re.sub(r"[^0-9]+", "", answer) #remove any unit, only keep numbers
         answer = float(answer)
     else:
+        answer = re.sub(r"[^0-9]+", "", answer) #remove any unit, only keep numbers
         answer = int(answer)
     return raw_answer, answer
 
