@@ -31,6 +31,7 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
     else:
         try:
             _, answer = raw_answer.split('####')
+            answer = answer.replace('<eos','')
         except ValueError:
             return None
 
@@ -61,7 +62,7 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
             continue
 
         #compare LLM answer and ground truth
-        if numeric_answer == numeric_ground_truth:
+        if float(numeric_answer) == float(numeric_ground_truth):
             correct_samples += 1
         else:
             incorrect_samples += 1
@@ -77,41 +78,40 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
     
     return accuracy
 
-def compute_entropy(exp_tensor:torch.tensor, prompting_technique:str, normalize=False)->dict:
+def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normalize=False) -> dict:
     entropy_dict = {}
     for prompt_key in exp_tensor.keys():
         prompt = exp_tensor[prompt_key]
 
-        #identify the answer token indices
+        # identify the answer token indices
         answer_token_indices = []
-        raw_answer, llm_answer = get_llm_answer(prompt, prompting_technique)
-        llm_answer = str(llm_answer)
-        reversed_raw_answer = raw_answer[::-1]
-        for char_llm_answer in llm_answer:
-            for idx, char_reversed_raw_answer in enumerate(reversed_raw_answer):
-                if char_llm_answer == char_reversed_raw_answer:
-                    indice = len(reversed_raw_answer) - idx -1
-                    answer_token_indices.append(indice)
+        _, llm_answer = get_llm_answer(prompt, prompting_technique)
+        llm_answer = "{:.2f}".format(llm_answer)  # ensure consistent formatting
+        reverse_decoded_tokens = prompt['decoded_tokens'][::-1]
+        used_indices = set()
+
+        for char in llm_answer[::-1]:  # reverse to match reversed token list
+            for idx, token in enumerate(reverse_decoded_tokens):
+                real_idx = len(reverse_decoded_tokens) - idx - 1
+                if real_idx in used_indices:
+                    continue
+                if char in token:
+                    answer_token_indices.append(real_idx)
+                    used_indices.add(real_idx)
                     break
-        
-        #compute average entropy over answer tokens
+        answer_token_indices = sorted(answer_token_indices)  # to preserve order
+
+        # compute average entropy over answer tokens
         entropy_per_token = []
         for idx in answer_token_indices:
             token_probs = prompt['top_p_probs'][idx]
-            #compute entropy
-            eps = 1e-12
-            probs = token_probs / (token_probs.sum() + eps)
-            entropy = -torch.sum(probs * torch.log(probs + eps)).item()
+            entropy = -torch.sum(token_probs * torch.log(token_probs + 1e-12)).item()
             if normalize:
-                entropy /= torch.log(torch.tensor(len(probs)) + eps).item()
+                entropy /= torch.log(torch.tensor(len(token_probs))).item()
             entropy_per_token.append(entropy)
-        
-        #average entropy of answer tokens
-        sum_entropy = sum(entropy_per_token)
-        n = len(entropy_per_token)
-        average_entropy = sum_entropy / n
-        entropy_dict[prompt_key] = average_entropy
 
+        average_entropy = sum(entropy_per_token) / len(entropy_per_token) if entropy_per_token else 0
+        entropy_dict[prompt_key] = average_entropy
     return entropy_dict
 
 def logit_uncertainty():

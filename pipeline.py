@@ -19,9 +19,9 @@ import os
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='real_test',type=str,
+parser.add_argument('--experiment_name',default='cot_test',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
-parser.add_argument('--n_samples',default=2,type=int,
+parser.add_argument('--n_samples',default=1,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
     help='start_index: Start index which the dataset questions will be split')
@@ -31,7 +31,7 @@ parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default=15, type=int,
+parser.add_argument('--tokens_per_response', default=500, type=int,
     help='Generate n tokens in each response and then cut off')
 parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
@@ -39,7 +39,7 @@ parser.add_argument('--not_verbose', action='store_false')
 parser.set_defaults(verbose=False)
 parser.add_argument('--local_dir', default='/home/max/Studium/Leipzig/Semster6/Math_and_ML/hf_models/mistralai/Mistral-7B-v0.1/', type=str,                               
                     help="Use when loading the model locally / debugging locally.")
-parser.add_argument('--prompting_technique', default="baseline", type=str,
+parser.add_argument('--prompting_technique', default="cot", type=str,
                     help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default: plain few-shot examples.")
 
 args = parser.parse_args()
