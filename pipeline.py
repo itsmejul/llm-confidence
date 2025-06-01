@@ -1,5 +1,5 @@
 import sys
-#sys.stdout.reconfigure(line_buffering=True) #TODO uncomment !!!
+sys.stdout.reconfigure(line_buffering=True) #TODO uncomment !!!
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
@@ -7,8 +7,8 @@ import gc
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-device_default = "cpu"
-#device_default = "cuda" if torch.cuda.is_available() else "cpu" #TODO uncomment !!!
+#device_default = "cpu"
+device_default = "cuda" if torch.cuda.is_available() else "cpu" 
 from utils import generate_with_top_p, load_model
 from itertools import combinations
 import json
