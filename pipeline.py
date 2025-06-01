@@ -1,6 +1,5 @@
 import sys
 sys.stdout.reconfigure(line_buffering=True) #TODO uncomment !!!
-
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import gc
@@ -10,11 +9,12 @@ import argparse
 #device_default = "cpu"
 device_default = "cuda" if torch.cuda.is_available() else "cpu" 
 from utils import generate_with_top_p, load_model
-from itertools import combinations
 import json
 import yaml
 import os
 import time
+from dotenv import load_dotenv
+from huggingface_hub import HfFolder, whoami
 
 #==========
 # Parse Arguments
@@ -54,6 +54,16 @@ tokens_per_response = args.tokens_per_response
 verbose = args.verbose
 local_dir = args.local_dir
 prompting_technique = args.prompting_technique
+
+
+#==========
+# Log in
+#==========
+load_dotenv()
+hf_token = os.getenv('HF_TOKEN')
+HfFolder.save_token(hf_token)
+user = whoami()
+print(f"logged in as {user["name"]}")
 
 #==========
 # Load Dataset
