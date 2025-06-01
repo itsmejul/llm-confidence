@@ -14,6 +14,7 @@ from itertools import combinations
 import json
 import yaml
 import os
+import time
 
 #==========
 # Parse Arguments
@@ -145,7 +146,10 @@ if __name__ == "__main__":
 
         torch.cuda.empty_cache()
         with torch.no_grad():
+            start_time = time.time()
             res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.99, max_tokens=tokens_per_response, device=device)
+            end_time = time.time()
+            latency = end_time - start_time
 
         data_from_one_prompt = {
             "generated_tokens": res["generated_tokens"].detach().cpu(),
@@ -157,7 +161,8 @@ if __name__ == "__main__":
             #"cosines": cosines,
             "prompt": prompt,
             "question": question,
-            "ground_truth": answer
+            "ground_truth": answer,
+            "latency": latency
         }
         full_results_data[f"prompt{i}"] = data_from_one_prompt
 
