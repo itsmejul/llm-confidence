@@ -38,7 +38,7 @@ parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
 parser.add_argument('--not_verbose', action='store_false')
 parser.set_defaults(verbose=False)
-parser.add_argument('--local_dir', default='/home/max/Studium/Leipzig/Semster6/Math_and_ML/hf_models/mistralai/Mistral-7B-v0.1/', type=str,                               
+parser.add_argument('--local_dir', default='', type=str,                               
                     help="Use when loading the model locally / debugging locally.")
 parser.add_argument('--prompting_technique', default="cod", type=str,
                     help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default: plain few-shot examples.")
@@ -96,7 +96,7 @@ print("Loaded Dataset.")
 #==========
 print(f"Loading model {model_name} from Huggingface on device {device}...")
 if local_dir != '':
-    model, tokenizer = load_model(model_name,local_dir, output_hidden_states=True, return_dict_in_generate=True)
+    model, tokenizer = load_model(model_name)
 else:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
