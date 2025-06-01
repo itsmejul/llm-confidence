@@ -1,4 +1,9 @@
 {
-    "accuracy": 0.0,
-    "average_entropy": 0.6191118934522917
+    "samples": 2,
+    "accuracy": "0 / 2",
+    "average_entropy": 0.6169124679622264,
+    "average_entropy_correct_samples": "no correct samples",
+    "average_entropy_incorrect_samples": 0.6169124679622264,
+    "average_tokens_used": 7.0,
+    "average_latency": "Bug occured."
 }
