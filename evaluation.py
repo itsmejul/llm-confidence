@@ -8,7 +8,7 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='test_new_pipeline',type=str,
+parser.add_argument('--experiment_name',default='test_cod_10',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
 
 args = parser.parse_args()
@@ -68,7 +68,7 @@ except ZeroDivisionError:
 #Entropy over all correct answered prompts
 df_correct = df_merged[df_merged["correct"] == "yes"]
 if len(df_correct) > 0:
-     average_entropy_correct = df_correct.mean()
+     average_entropy_correct = df_correct["entropy"].mean()
 else:
      average_entropy_correct = "no correct samples"
 
