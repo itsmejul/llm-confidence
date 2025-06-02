@@ -13,9 +13,10 @@ def get_ground_truth(prompt:dict)->float:
         return None
     
     ground_truth = ground_truth.strip()
-    if "." in ground_truth or "," in ground_truth:
+    if "." in ground_truth:
         return float(ground_truth)
     else:
+        ground_truth = ground_truth.replace(",", "") #convert 2,125 to 2125
         return int(ground_truth)
 
 def get_llm_answer(prompt:dict, prompting_technique:str)->float:
@@ -39,13 +40,19 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
             return None, None
 
     answer = answer.strip()
-    if "." in answer or "," in answer:
-        answer = answer.replace(",", "")
+    if "." in answer:
         answer = re.sub(r"[^0-9]+", "", answer) #remove any unit, only keep numbers
-        answer = float(answer)
+        try:
+            answer = float(answer)
+        except ValueError:
+            return None, None
     else:
+        answer = answer.replace(",", "") #convert 2,125 to 2125
         answer = re.sub(r"[^0-9]+", "", answer) #remove any unit, only keep numbers
-        answer = int(answer)
+        try:
+            answer = int(answer)
+        except ValueError:
+            return None, None
     return raw_answer, answer
 
 def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
@@ -53,12 +60,15 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
     incorrect_samples = 0
     buggy_sample = 0
     correctness_dict = {}
+    answer_dict = {}
     for prompt_key in exp_tensor.keys():
         prompt = exp_tensor[prompt_key]
         #extract the ground truth answer
         numeric_ground_truth = get_ground_truth(prompt)
         if numeric_ground_truth is None:
             buggy_sample +=1
+            correctness_dict[prompt_key] = "buggy"
+            answer_dict[prompt_key] = ("None", "None")
             continue
         
 
@@ -67,6 +77,7 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
         if numeric_answer is None:
             buggy_sample +=1
             correctness_dict[prompt_key] = "buggy"
+            answer_dict[prompt_key] = ("None", numeric_ground_truth)
             continue
 
         #compare LLM answer and ground truth
@@ -76,12 +87,14 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
         else:
             incorrect_samples += 1
             correctness_dict[prompt_key] = "no"
+        
+        answer_dict[prompt_key] = (numeric_answer, numeric_ground_truth)
 
     prompt_count = len(exp_tensor) 
     n = prompt_count - buggy_sample
-    accuracy = f"{correct_samples } / {n}"
+    accuracy = f"{correct_samples} / {n}" if n > 0 else "0 / 0"
     
-    return accuracy, correctness_dict
+    return accuracy, correctness_dict, answer_dict
 
 def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normalize=False) -> dict:
     entropy_dict = {}

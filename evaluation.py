@@ -8,7 +8,7 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='test_cod_10',type=str,
+parser.add_argument('--experiment_name',default='run_few_shot_500',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
 
 args = parser.parse_args()
@@ -39,18 +39,22 @@ results = torch.load(output_tensor_path)
 #==========
 from evaluation_utils import calculate_accuracy, compute_entropy, get_latency, get_tokens_per_prompt
 
-accuracy, correctness_dict = calculate_accuracy(exp_tensor=results, prompting_technique=prompting_technique)
+accuracy, correctness_dict, answer_dict = calculate_accuracy(exp_tensor=results, prompting_technique=prompting_technique)
 entropy = compute_entropy(exp_tensor=results, prompting_technique=prompting_technique, normalize=True)
 latency_per_prompt = get_latency(exp_tensor=results)
 tokens_per_prompt = get_tokens_per_prompt(exp_tensor=results)
 
+df_answers = pd.DataFrame([(k, v[0], v[1]) for k, v in answer_dict.items()],columns=["prompt_id", "llm_answer", "ground_truth"])
 df_correct = pd.DataFrame(list(correctness_dict.items()), columns=["prompt_id", "correct"])
 df_entropy = pd.DataFrame(list(entropy.items()), columns=["prompt_id", "entropy"])
 df_latency = pd.DataFrame(list(latency_per_prompt.items()), columns=["prompt_id", "latency"])
 df_tokens = pd.DataFrame(list(tokens_per_prompt.items()), columns=["prompt_id", "tokens_used"])
 
 # Merge all into a single dataframe on 'prompt_id'
-df_merged = df_entropy.merge(df_latency, on="prompt_id").merge(df_tokens, on="prompt_id").merge(df_correct, on="prompt_id")
+df_merged = df_entropy.merge(df_latency, on="prompt_id") \
+                      .merge(df_tokens, on="prompt_id") \
+                      .merge(df_correct, on="prompt_id") \
+                      .merge(df_answers, on="prompt_id")
 df_merged.to_csv(f"{experiment_path}/evaluation_results.csv", index=False)
 
 #==========
