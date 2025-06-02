@@ -1,0 +1,8 @@
+{
+    "model": "mistralai/Mistral-7B-v0.1",
+    "dataset": "openai/gsm8k",
+    "device": "cuda",
+    "experiment_name": "cot_test_10",
+    "tokens_per_response": 1000,
+    "prompting_technique": "cot"
+}
