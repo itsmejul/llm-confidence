@@ -1,0 +1,8 @@
+{
+    "model": "mistralai/Mistral-7B-v0.1",
+    "dataset": "openai/gsm8k",
+    "device": "cuda",
+    "experiment_name": "run_few_shot_500",
+    "tokens_per_response": 30,
+    "prompting_technique": "baseline"
+}
