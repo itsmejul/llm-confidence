@@ -34,14 +34,12 @@ parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
 parser.add_argument('--tokens_per_response', default=200, type=int,
     help='Generate n tokens in each response and then cut off')
-parser.add_argument('--verbose', action='store_true',
-                    help="Print debug statements when set to True.")
-parser.add_argument('--not_verbose', action='store_false')
-parser.set_defaults(verbose=False)
 parser.add_argument('--local_dir', default='', type=str,                               
                     help="Use when loading the model locally / debugging locally.")
 parser.add_argument('--prompting_technique', default="cod", type=str,
                     help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default: plain few-shot examples.")
+parser.add_argument('--top_p', default=0.95, type=float,
+                    help="Generate tokens whichs probabilities sum up to top_p. If top_p is 1 it will generate ~32k tokenprobs, likely too large.")
 
 args = parser.parse_args()
 experiment_name = args.experiment_name
@@ -51,9 +49,9 @@ model_name = args.model_name
 dataset_name = args.dataset
 device = args.device
 tokens_per_response = args.tokens_per_response
-verbose = args.verbose
 local_dir = args.local_dir
 prompting_technique = args.prompting_technique
+top_p = args.top_p
 
 
 #==========
@@ -126,7 +124,7 @@ if __name__ == "__main__":
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
     full_results_data = {}
     metadata = {"model": model_name, "dataset": dataset_name, "device": device, "experiment_name": experiment_name,
-                 "tokens_per_response": tokens_per_response, "prompting_technique":prompting_technique}
+                 "tokens_per_response": tokens_per_response, "prompting_technique":prompting_technique, "top_p": top_p}
 
 
     #creat experiment directory
@@ -157,7 +155,7 @@ if __name__ == "__main__":
         torch.cuda.empty_cache()
         with torch.no_grad():
             start_time = time.time()
-            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.99, max_tokens=tokens_per_response, device=device)
+            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=top_p, max_tokens=tokens_per_response, device=device)
             end_time = time.time()
             latency = end_time - start_time
 

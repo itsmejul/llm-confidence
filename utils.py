@@ -97,6 +97,15 @@ def generate_with_top_p(
     for token in generated:
         answer_tokens.append(tokenizer.decode(token))
 
+    if not generated: #edge case when first token is eos token, then generated will be empty 
+        return {
+            "generated_tokens": torch.tensor([], dtype=torch.long),
+            "decoded_tokens": [],
+            "top_p_tokens": [],
+            "top_p_logits": [],
+            "top_p_probs": [],
+        }
+
     return {
         "generated_tokens": torch.cat(generated, dim=0), #token ids
         "decoded_tokens": answer_tokens, #decoded tokens
