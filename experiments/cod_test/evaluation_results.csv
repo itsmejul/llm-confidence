@@ -1,3 +1,0 @@
-prompt_id,entropy,latency,tokens_used,correct
-prompt0,,,47,buggy
-prompt1,0.0,,91,no

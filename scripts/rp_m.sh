@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=cot_test_10
+#SBATCH --job-name=few_shot_all
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
@@ -25,4 +25,4 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="cot_test_10" --n_samples=10 --start_index=2 --model_name="mistralai/Mistral-7B-v0.1" --device="cuda" --tokens_per_response=1000 --prompting_technique="cot"
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="few_shot_all" --n_samples=-1 --start_index=0 --model_name="mistralai/Mistral-7B-v0.1" --device="cuda" --tokens_per_response=50 --prompting_technique="baseline"
