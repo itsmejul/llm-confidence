@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=run_few_shot_500
+#SBATCH --job-name=test_cod_10
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
@@ -25,4 +25,4 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="run_few_shot_500" --n_samples=500 --start_index=0 --model_name="mistralai/Mistral-7B-v0.1" --device="cuda" --tokens_per_response=30 --prompting_technique="baseline"
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="test_cod_10" --n_samples=10 --start_index=2 --model_name="mistralai/Mistral-7B-v0.1" --device="cuda" --tokens_per_response=200 --prompting_technique="cod"
