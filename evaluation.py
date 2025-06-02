@@ -8,7 +8,7 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='run_few_shot_500',type=str,
+parser.add_argument('--experiment_name',default='few_shot_all',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
 
 args = parser.parse_args()

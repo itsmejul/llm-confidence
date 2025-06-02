@@ -1,0 +1,9 @@
+{
+    "samples": 1319,
+    "accuracy": "69 / 1041",
+    "average_entropy": 0.7389987544315941,
+    "average_entropy_correct_samples": 0.6485675857816318,
+    "average_entropy_incorrect_samples": 0.7454182509715607,
+    "average_tokens_used": 15.059135708870356,
+    "average_latency": 1.9742471804846589
+}
