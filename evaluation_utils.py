@@ -163,6 +163,19 @@ def get_tokens_per_prompt(exp_tensor: torch.tensor)->dict:
     return tokens_dict
 
 
+def check_for_duplicate_questions(exp_tensor: dict):
+    question_to_keys = {}
+    duplicates = []
+
+    for key, sample in exp_tensor.items():
+        question = sample.get("question", "").strip()
+        if question in question_to_keys:
+            duplicates.append((question, question_to_keys[question], key))
+        else:
+            question_to_keys[question] = key
+
+    return duplicates
+
 def logit_uncertainty():
     #TODO
     ...

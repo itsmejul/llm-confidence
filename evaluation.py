@@ -10,9 +10,12 @@ import pandas as pd
 parser = argparse.ArgumentParser(description='Args for experiments')
 parser.add_argument('--experiment_name',default='few_shot_all',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
+parser.add_argument('--rerun',default='yes',type=str,
+    help='If it is set to "yes" then search for reurn file instead of output file tensor.')
 
 args = parser.parse_args()
 experiment_name = args.experiment_name
+rerun = args.rerun
 
 experiment_path = os.path.join('experiments', experiment_name)
 
@@ -29,10 +32,42 @@ prompting_technique = metadata['prompting_technique']
 #==========
 # Result Tensor
 #==========
-for filename in os.listdir(experiment_path):
-        if filename.startswith("output") and filename.endswith(".pt"):
-            output_tensor_path = os.path.join(experiment_path, filename)
-results = torch.load(output_tensor_path)
+if rerun == "yes":
+     reruns = []
+     for filename in os.listdir(experiment_path):
+          if filename.startswith("output") and filename.endswith(".pt"):
+               output_tensor_path = os.path.join(experiment_path, filename)
+          if filename.startswith("rerun") and filename.endswith(".pt"):
+               reruns.append(os.path.join(experiment_path, filename))
+     
+     # Load original output tensor
+     results = torch.load(output_tensor_path)
+
+     # Load and merge rerun results
+     for rerun_path in reruns:
+          rerun_tensor = torch.load(rerun_path)
+          results.update(rerun_tensor)  # overwrite buggy samples with rerun results
+     print(f"{output_tensor_path=}")
+     print(f"Rerun_paths = {reruns}")
+else:
+     for filename in os.listdir(experiment_path):
+          if filename.startswith("output") and filename.endswith(".pt"):
+               output_tensor_path = os.path.join(experiment_path, filename)
+     results = torch.load(output_tensor_path)
+     print(f"{output_tensor_path=}")
+
+#==========
+# Checking for duplicates
+#==========
+from evaluation_utils import check_for_duplicate_questions
+duplicate_entries = check_for_duplicate_questions(exp_tensor=results)
+if duplicate_entries:
+    print("\nDUPLICATE QUESTIONS DETECTED:")
+    for question, key1, key2 in duplicate_entries:
+        print(f"Question: {question}\nFound in: {key1} and {key2}\n")
+else:
+    print("No duplicate questions found.")
+
 
 #==========
 # Evaluation
