@@ -1,5 +1,11 @@
 import torch
 import re
+import torch.nn.functional as F
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import pandas as pd
 
 def get_ground_truth(prompt:dict)->float:
     try:
@@ -176,9 +182,131 @@ def check_for_duplicate_questions(exp_tensor: dict):
 
     return duplicates
 
-def logit_uncertainty():
-    #TODO
-    ...
+#TODO check this method, if it properly works and everything is sound
+def compute_logtoku_uncertainty(exp_tensor: dict, prompting_technique: str) -> dict:
+    result_dict = {}
+    for prompt_key, prompt in exp_tensor.items():
+        logtok_au = []
+        logtok_eu = []
+
+        # Extract the LLM answer and match characters to token positions
+        _, llm_answer = get_llm_answer(prompt, prompting_technique)
+        if llm_answer is None:
+            result_dict[prompt_key] = {"avg_au": None, "avg_eu": None}
+            continue
+
+        if isinstance(llm_answer, float):
+            llm_answer = "{:.2f}".format(llm_answer)
+        else:
+            llm_answer = str(llm_answer)
+
+        reverse_decoded_tokens = prompt['decoded_tokens'][::-1]
+        used_indices = set()
+        answer_token_indices = []
+
+        for char in llm_answer[::-1]:  # reverse to align from end
+            for idx, token in enumerate(reverse_decoded_tokens):
+                real_idx = len(reverse_decoded_tokens) - idx - 1
+                if real_idx in used_indices:
+                    continue
+                if char in token:
+                    answer_token_indices.append(real_idx)
+                    used_indices.add(real_idx)
+                    break
+
+        answer_token_indices = sorted(answer_token_indices)
+
+        # Compute AU and EU for answer token positions only
+        for idx in answer_token_indices:
+            try:
+                logits = prompt['top_p_logits'][idx]
+                if len(logits) < 2:
+                    continue
+                alpha = F.relu(logits + 1)
+                alpha_0 = torch.sum(alpha)
+                au = -torch.sum((alpha / alpha_0) * (torch.special.digamma(alpha + 1) - torch.special.digamma(alpha_0 + 1)))
+                eu = len(alpha) / torch.sum(alpha + 1)
+                logtok_au.append(au.item())
+                logtok_eu.append(eu.item())
+            except (IndexError, KeyError):
+                continue
+
+        if logtok_au and logtok_eu:
+            result_dict[prompt_key] = {
+                "avg_au": sum(logtok_au) / len(logtok_au),
+                "avg_eu": sum(logtok_eu) / len(logtok_eu)
+            }
+        else:
+            result_dict[prompt_key] = {"avg_au": None, "avg_eu": None}
+    return result_dict
+
+#TODO check this for soundness
+def plot_logtoku_quadrants(df: pd.DataFrame, output_path: str) -> None:
+    # ---- 1. filter & normalise ------------------------------------------------
+    df_plot = df.dropna(subset=["avg_au", "avg_eu"]).copy()
+
+    def _normalise_series(series: pd.Series) -> pd.Series:
+        vmin, vmax = series.min(), series.max()
+        if vmax == vmin:
+            return series * 0.0
+        return (series - vmin) / (vmax - vmin)
+
+    df_plot["norm_au"] = _normalise_series(df_plot["avg_au"])
+    df_plot["norm_eu"] = _normalise_series(df_plot["avg_eu"])
+
+    # ---- 2. quadrant classification ------------------------------------------
+    def classify_quadrant(row):
+        if row["norm_au"] >= 0.5 and row["norm_eu"] >= 0.5:
+            return "I"
+        elif row["norm_au"] < 0.5 and row["norm_eu"] >= 0.5:
+            return "II"
+        elif row["norm_au"] < 0.5 and row["norm_eu"] < 0.5:
+            return "III"
+        else:
+            return "IV"
+
+    df_plot["quadrant"] = df_plot.apply(classify_quadrant, axis=1)
+
+    # ---- 3. colour-map for correctness ---------------------------------------
+    color_map = {"yes": "green", "no": "red", "buggy": "gray"}
+    colors = df_plot["correct"].map(color_map).fillna("gray")
+
+    # ---- 4. plotting ----------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # quadrant grid
+    ax.axvline(0.5, color="black", linestyle="--", linewidth=1)
+    ax.axhline(0.5, color="black", linestyle="--", linewidth=1)
+
+    # scatter
+    ax.scatter(
+        df_plot["norm_au"],
+        df_plot["norm_eu"],
+        c=colors,
+        alpha=0.7,
+        edgecolors="k",
+        linewidths=0.5,
+        s=40,
+    )
+
+    # labels / legend
+    ax.set_xlabel("Normalised Aleatoric Uncertainty (AU)")
+    ax.set_ylabel("Normalised Epistemic Uncertainty (EU)")
+    ax.set_title("LogTokU Quadrants per Prompt")
+
+    legend_elements = [
+        Line2D([0], [0], marker="o", color="w", label="Correct",
+               markerfacecolor="green", markersize=8),
+        Line2D([0], [0], marker="o", color="w", label="Incorrect",
+               markerfacecolor="red", markersize=8),
+        Line2D([0], [0], marker="o", color="w", label="Buggy",
+               markerfacecolor="gray", markersize=8),
+    ]
+    ax.legend(handles=legend_elements, title="Prompt Outcome", loc="upper left")
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300)
+    plt.close()
 
 def cos_similarity():
     #TODO

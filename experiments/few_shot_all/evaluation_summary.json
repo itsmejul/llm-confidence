@@ -5,5 +5,11 @@
     "average_entropy_correct_samples": 0.6324938771790354,
     "average_entropy_incorrect_samples": 0.7460456448531777,
     "average_tokens_used": 10.670204700530705,
-    "average_latency": 1.4327740074559718
+    "average_latency": 1.4327740074559718,
+    "average_au": 2.022028147948879,
+    "average_eu": 0.06482615998292915,
+    "average_au_correct": 1.861530104794177,
+    "average_eu_correct": 0.06493771717730297,
+    "average_au_incorrect": 2.033394476943623,
+    "average_eu_incorrect": 0.06481825960141631
 }
