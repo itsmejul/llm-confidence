@@ -15,6 +15,7 @@ import os
 import time
 from dotenv import load_dotenv
 from huggingface_hub import HfFolder, whoami
+import pandas as pd
 
 #==========
 # Parse Arguments
@@ -22,7 +23,7 @@ from huggingface_hub import HfFolder, whoami
 parser = argparse.ArgumentParser(description='Args for experiments')
 parser.add_argument('--experiment_name',default='cod_test',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
-parser.add_argument('--n_samples',default=2,type=int,
+parser.add_argument('--n_samples',default=10,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
     help='start_index: Start index which the dataset questions will be split')
@@ -40,6 +41,9 @@ parser.add_argument('--prompting_technique', default="cod", type=str,
                     help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default: plain few-shot examples.")
 parser.add_argument('--top_p', default=0.95, type=float,
                     help="Generate tokens whichs probabilities sum up to top_p. If top_p is 1 it will generate ~32k tokenprobs, likely too large.")
+parser.add_argument('--rerun_buggy_samples', default="no", type=str,
+                    help="If it is set to 'yes': look for an already existing folder with the experiment name and get a list of indices that have to be rerun" \
+                    "from a csv buggy_prompts_to_rerun.csv. If it is set to 'no' no change.")
 
 args = parser.parse_args()
 experiment_name = args.experiment_name
@@ -52,6 +56,7 @@ tokens_per_response = args.tokens_per_response
 local_dir = args.local_dir
 prompting_technique = args.prompting_technique
 top_p = args.top_p
+rerun_buggy_samples = args.rerun_buggy_samples
 
 
 #==========
@@ -71,21 +76,29 @@ print(f"Loading Dataset {dataset_name} from Huggingface...")
 raw_dataset = load_dataset(dataset_name, "main")
 test_dataset = raw_dataset['test'] #Use the test dataset of gsm8k - 1319 samples
 
+if rerun_buggy_samples == "no":
+    len_dataset = len(test_dataset['question'])
+    if start_index > len_dataset:
+        print(f"{start_index=} is bigger than {len_dataset=}")
+        raise IndexError
 
-len_dataset = len(test_dataset['question'])
-if start_index > len_dataset:
-    print(f"{start_index=} is bigger than {len_dataset=}")
-    raise IndexError
+    if n_samples == -1:
+        n_samples = len(test_dataset['question'])
 
-if n_samples == -1:
-    n_samples = len(test_dataset['question'])
+    end = start_index + n_samples
+    if end > len_dataset:
+        end = len(test_dataset['question'])
 
-end = start_index + n_samples
-if end > len_dataset:
-    end = len(test_dataset['question'])
+    questions = test_dataset['question'][start_index:end]
+    answers = test_dataset['answer'][start_index:end]
+else:
+    buggy_csv_path = os.path.join("experiments", experiment_name, "buggy_prompts_to_rerun.csv")
+    df_buggy = pd.read_csv(buggy_csv_path)
+    buggy_indices = df_buggy["buggy_prompt_ids"].tolist()
 
-questions = test_dataset['question'][start_index:end]
-answers = test_dataset['answer'][start_index:end]
+    questions = [test_dataset['question'][int(i)] for i in buggy_indices]
+    answers = [test_dataset['answer'][int(i)] for i in buggy_indices]
+    #note: n_samples is ignored here, it will do all buggy samples
 
 print("Loaded Dataset.")
 

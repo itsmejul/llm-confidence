@@ -57,6 +57,15 @@ df_merged = df_entropy.merge(df_latency, on="prompt_id") \
                       .merge(df_answers, on="prompt_id")
 df_merged.to_csv(f"{experiment_path}/evaluation_results.csv", index=False)
 
+#output a list of buggy samples to rerun them later
+buggy_samples_indices = []
+for key, value in correctness_dict.items():
+     if value == "buggy":
+          indice = key.replace("prompt", "")
+          buggy_samples_indices.append(indice)
+df_buggy_indices = pd.DataFrame(buggy_samples_indices, columns=["buggy_prompt_ids"])
+df_buggy_indices.to_csv(f"{experiment_path}/buggy_prompts_to_rerun.csv")
+
 #==========
 # Compute average values
 #==========
