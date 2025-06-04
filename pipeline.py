@@ -145,7 +145,10 @@ if __name__ == "__main__":
     os.makedirs(dir_path, exist_ok=True)
 
     #save metadata
-    metadata_file = os.path.join(dir_path, f"metadata.json")
+    if rerun_buggy_samples == "yes":
+        metadata_file = os.path.join(dir_path, f"rerun_metadata.json")
+    else:
+        metadata_file = os.path.join(dir_path, f"metadata.json")
     with open(metadata_file, "w") as f:
         json.dump(metadata, f, indent=4)
     print(f"Metadata saved to {metadata_file}")
@@ -195,6 +198,9 @@ if __name__ == "__main__":
         print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
         print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")
         print(f"Max alloc: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
-        output_file = os.path.join(dir_path, f"output_{timestamp}.pt")
+        if rerun_buggy_samples == "yes":
+            output_file = os.path.join(dir_path, f"rerun_output_{timestamp}.pt")
+        else:
+            output_file = os.path.join(dir_path, f"output_{timestamp}.pt")
         torch.save(full_results_data, output_file) #overwrites every sample
         print(f"Saved to {output_file}")
