@@ -188,7 +188,10 @@ if __name__ == "__main__":
             "ground_truth": answer,
             "latency": latency
         }
-        full_results_data[f"prompt{i}"] = data_from_one_prompt
+        if rerun_buggy_samples == "yes":
+            full_results_data[f"prompt{buggy_indices[i]}"] = data_from_one_prompt #get the correct indice from the csv list
+        else:
+            full_results_data[f"prompt{i}"] = data_from_one_prompt
 
         del res                  # to free up memory
         del data_from_one_prompt # to free up memory
