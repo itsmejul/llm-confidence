@@ -93,7 +93,7 @@ if __name__ == "__main__":
         }
 
         experiment_data.append(prompt_data)
-        print(experiment_data)
+        #print(experiment_data)
         del res
         del prompt_data
         gc.collect()
