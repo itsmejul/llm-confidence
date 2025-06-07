@@ -142,7 +142,7 @@ def generate_with_top_p(
         #"top_p_logits": top_p_logits,
         "top_p_probs": top_p_probs,
         #"full_logits" : full_logits,
-        #"full_probs" : full_probs,
+        "full_probs" : full_probs,
     }
 def generate_with_top_p_corr(
     model: PreTrainedModel,
