@@ -102,6 +102,8 @@ if __name__ == "__main__":
         del prompt_data
         gc.collect()
         torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
+
 
         print(f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
         print(f"Reserved : {torch.cuda.memory_reserved() / 1e9:.2f} GB")

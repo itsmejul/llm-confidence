@@ -215,8 +215,9 @@ def generate_with_top_p_corr(
             [attention_mask, torch.ones((1, 1), dtype=attention_mask.dtype, device=device)],
             dim=1
         )
-    del logits, probs, top_logits, top_probs, sorted_probs, sorted_indices, cum_probs
-    torch.cuda.empty_cache()
+        del logits, probs, top_logits, top_probs, sorted_probs, sorted_indices, cum_probs
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
 
     return {
         "generated_tokens": torch.cat(generated, dim=0), #token ids
