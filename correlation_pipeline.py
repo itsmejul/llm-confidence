@@ -8,7 +8,7 @@ from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
 device = "cuda" if torch.cuda.is_available() else "cpu"
-from utils import generate_with_top_p, compute_avg_cosine_similarities, compute_token_entropies, load_model
+from utils import generate_with_top_p, generate_with_top_p_corr, compute_avg_cosine_similarities, compute_token_entropies, load_model
 from itertools import combinations
 import json
 import re
@@ -82,7 +82,8 @@ if __name__ == "__main__":
     
         torch.cuda.empty_cache()
         with torch.no_grad():
-            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
+            #res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
+            res = generate_with_top_p_corr(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
             entropies = compute_token_entropies(res["full_probs"])
         # prompt, full_entropies, top_p_tokens
         prompt_data = {
@@ -105,7 +106,12 @@ if __name__ == "__main__":
 print("saving to file")
 output_file = f"output_{timestamp}.pt"
 save_path = "results/" + dataset_name + "/" + model_save_name + "/" + output_file
+txt_save_path = "results/" + dataset_name + "/" + model_save_name + "/" + "hyperparams.txt"
 
 os.makedirs(os.path.dirname(save_path), exist_ok=True)
 torch.save(experiment_data, save_path)
+os.makedirs(os.path.dirname(txt_save_path), exist_ok=True)
+
+with open(txt_save_path, "w") as f:
+    f.write(model_name)
 print("saved")
