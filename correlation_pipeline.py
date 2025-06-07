@@ -85,10 +85,12 @@ if __name__ == "__main__":
             #res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
             res = generate_with_top_p_corr(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
             entropies = compute_token_entropies(res["full_probs"])
+            cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight)
         # prompt, full_entropies, top_p_tokens
         prompt_data = {
             "prompt" : prompt,
             "entropies" : entropies,
+            "cosines" : cosines,
             "top_p_tokens" : [t.detach().cpu() for t in res["top_p_tokens"]]
         }
 
