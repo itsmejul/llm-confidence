@@ -144,6 +144,85 @@ def generate_with_top_p(
         #"full_logits" : full_logits,
         #"full_probs" : full_probs,
     }
+def generate_with_top_p_corr(
+    model: PreTrainedModel,
+    tokenizer: PreTrainedTokenizer,
+    prompt: str,
+    p: float,
+    max_tokens: int,
+    device: torch.device = None
+) -> Dict[str, Any]:
+    """
+    Generate tokens with top-p sampling for a single prompt, tracking each step.
+
+    Returns a dict with:
+      - generated_tokens: Tensor of shape (max_tokens,) with generated token IDs
+      - top_p_tokens: List[Tensor] of top-p token IDs at each step
+      - top_p_logits: List[Tensor] of logits for those tokens
+      - top_p_probs: List[Tensor] of their probabilities
+    """
+    eos_token_id = tokenizer.eos_token_id
+    
+    model.eval()
+    if device is None:
+        device = next(model.parameters()).device
+
+    # Tokenize prompt with attention mask
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded.input_ids.to(device)
+    attention_mask = encoded.attention_mask.to(device)
+
+    generated = []
+    top_p_tokens = []
+    full_probs = []
+
+
+    for _ in range(max_tokens):
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+        logits = outputs.logits[:, -1, :].squeeze(0)
+        probs = torch.softmax(logits, dim=-1)
+
+        # save full distribution
+        full_probs.append(probs.detach().cpu())
+
+        # Identify top-p set
+        sorted_probs, sorted_indices = torch.sort(probs, descending=True)
+        cum_probs = torch.cumsum(sorted_probs, dim=0)
+        cutoff = torch.searchsorted(cum_probs, p).item() + 1
+        top_indices = sorted_indices[:cutoff]
+        top_logits = logits[top_indices]
+        top_probs = probs[top_indices]
+
+        # Sample
+        top_probs_norm = top_probs / top_probs.sum()
+        chosen_idx = torch.multinomial(top_probs_norm, 1).item()
+        chosen_token = top_indices[chosen_idx].unsqueeze(0)
+
+        # Stop if EOS token is generated
+        if eos_token_id is not None and int(chosen_token) == eos_token_id:
+            break
+
+        # Record
+        generated.append(chosen_token)
+        #top_p_tokens.append(top_indices)
+        #top_p_logits.append(top_logits)
+        #top_p_probs.append(top_probs)
+        top_p_tokens.append(top_indices.cpu())
+
+        # Append for next step
+        input_ids = torch.cat([input_ids, chosen_token.unsqueeze(0)], dim=-1)
+        attention_mask = torch.cat(
+            [attention_mask, torch.ones((1, 1), dtype=attention_mask.dtype, device=device)],
+            dim=1
+        )
+    del logits, probs, top_logits, top_probs, sorted_probs, sorted_indices, cum_probs
+    torch.cuda.empty_cache()
+
+    return {
+        "generated_tokens": torch.cat(generated, dim=0), #token ids
+        "top_p_tokens": top_p_tokens,
+        "full_probs" : full_probs,
+    }
 
 
 def generate_with_top_p_batch(
