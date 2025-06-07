@@ -35,6 +35,7 @@ parser.add_argument('--no_reasoning_qwen', dest='reasoning_qwen', action='store_
 parser.set_defaults(reasoning_qwen=False)
 parser.add_argument('--verbose', action='store_true',
                     help="Print debug statements when set to True.")
+parser.add_argument('--not_verbose', action='store_false')
 parser.set_defaults(verbose=False)
 parser.add_argument('--local_dir', default='', type=str,
                     help="Use when loading the model locally / debugging locally.")
@@ -152,8 +153,8 @@ if __name__ == "__main__":
         answer = example["answer"]
         torch.cuda.empty_cache()
         with torch.no_grad():
-            #res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=tokens_per_response, device=device)
-            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=1, max_tokens=tokens_per_response, device=device)
+            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.99, max_tokens=tokens_per_response, device=device)
+            #res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=1, max_tokens=tokens_per_response, device=device)
 
             #entropies = compute_token_entropies(res["top_p_probs"]) 
             #entropies = compute_token_entropies(res["full_probs"]) 
