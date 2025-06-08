@@ -174,8 +174,8 @@ def generate_with_top_p_corr(
 
     generated = []
     top_p_tokens = []
-    full_probs = []
-
+    #full_probs = []
+    top_p_probs = []
 
     for _ in range(max_tokens):
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
@@ -183,7 +183,7 @@ def generate_with_top_p_corr(
         probs = torch.softmax(logits, dim=-1)
 
         # save full distribution
-        full_probs.append(probs.detach().cpu())
+        #full_probs.append(probs.detach().cpu())
 
         # Identify top-p set
         sorted_probs, sorted_indices = torch.sort(probs, descending=True)
@@ -206,7 +206,7 @@ def generate_with_top_p_corr(
         generated.append(chosen_token)
         #top_p_tokens.append(top_indices)
         #top_p_logits.append(top_logits)
-        #top_p_probs.append(top_probs)
+        top_p_probs.append(top_probs)
         top_p_tokens.append(top_indices.cpu())
 
         # Append for next step
@@ -222,7 +222,8 @@ def generate_with_top_p_corr(
     return {
         "generated_tokens": torch.cat(generated, dim=0), #token ids
         "top_p_tokens": top_p_tokens,
-        "full_probs" : full_probs,
+        "top_p_probs" : top_p_probs,
+        #"full_probs" : full_probs,
     }
 
 

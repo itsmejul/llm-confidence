@@ -83,8 +83,7 @@ if __name__ == "__main__":
         torch.cuda.empty_cache()
         with torch.no_grad():
             #res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
-            res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
-            print(res["full_probs"])
+            res = generate_with_top_p_corr(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=max_tokens, device=device)
             entropies = compute_token_entropies(res["top_p_probs"])
             print(entropies)
             cosines = compute_avg_cosine_similarities(res["top_p_tokens"], embedding_layer.weight)
