@@ -8,6 +8,11 @@ def prepare_dataset_for_correlation_analysis(dataset_name, n_samples):
     elif dataset_name == "writingprompts":
         dataset = load_dataset("euclaise/writingprompts", split="validation")
         dataset = dataset.remove_columns("story")
+    elif dataset_name == "xsum":
+        dataset = load_dataset("EdinburghNLP/xsum", split="test")
+        dataset = dataset.remove_columns(["summary", "id"])
+        dataset = dataset.rename_column("document", "prompt")
+        dataset = dataset.map(lambda x: {"prompt": "Please summarize the following text:\n " + x["prompt"]})
     else:
         raise ValueError(f"Unknown dataset {dataset_name}")
     dataset = dataset.select(range(min(n_samples, len(dataset))))

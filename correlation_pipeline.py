@@ -18,7 +18,7 @@ import os
 
 parser = argparse.ArgumentParser(description="Args for experiments")
 parser.add_argument('--dataset_name', default="writingprompts",type=str,
-    help='dataset_name: Can be either gsm8k or writingprompts')
+    help='dataset_name: Can be either gsm8k or writingprompts or xsum')
 parser.add_argument('--n_samples', default=100, type=int,
     help="n_samples: number of prompts from dataset")
 parser.add_argument('--max_tokens', default=100, type=int,
