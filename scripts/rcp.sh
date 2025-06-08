@@ -30,6 +30,6 @@ else
 fi
 
 
-python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/correlation_pipeline.py --dataset_name=xsum --model_name="deepseek-ai/DeepSeek-R1"
+python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/correlation_pipeline.py --dataset_name=xsum --model_name="deepseek-ai/deepseek-llm-7b-base"
 
 
