@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=corr
-#SBATCH --partition=clara
-#SBATCH --gpus=v100
+#SBATCH --partition=paula
+#SBATCH --gpus=a30
 #SBATCH --ntasks=1
 #SBATCH --mem=32G
 #SBATCH --time=00:30:00
@@ -30,6 +30,6 @@ else
 fi
 
 
-python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/correlation_pipeline.py --dataset_name=xsum
+python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/correlation_pipeline.py --dataset_name=xsum --model_name="deepseek-ai/DeepSeek-R1"
 
 

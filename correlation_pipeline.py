@@ -44,7 +44,7 @@ print(dataset[0])
 
 print(f"Loading model {model_name} from Huggingface on device {device}...")
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu # faster than float 32
@@ -53,6 +53,7 @@ model = AutoModelForCausalLM.from_pretrained(
         output_hidden_states=True,
         # This flag makes the generate() method return additional info (see later)
         return_dict_in_generate=True,
+        trust_remote_code=True,
     )
 if device == "cuda":
     print("moving model to cuda...")
