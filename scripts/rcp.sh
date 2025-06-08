@@ -30,6 +30,6 @@ else
 fi
 
 
-python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/correlation_pipeline.py --dataset_name=gsm8k --model_name="Qwen/Qwen3-8B"
+python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llama-3.1-8B"
 
 
