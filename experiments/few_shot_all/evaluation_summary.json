@@ -1,15 +1,15 @@
 {
     "samples": 1319,
-    "accuracy": "87 / 1257",
-    "average_entropy": 0.7383628493337023,
+    "accuracy": "87 / 1273",
+    "average_entropy": 0.738262909500668,
     "average_entropy_correct_samples": 0.6315238181424933,
-    "average_entropy_incorrect_samples": 0.7463072901145871,
-    "average_tokens_used": 10.670204700530705,
-    "average_latency": 1.4327740074559718,
-    "average_au": 2.0219192716979304,
-    "average_eu": 0.06482905420264627,
+    "average_entropy_incorrect_samples": 0.7460928428465038,
+    "average_tokens_used": 10.36163760424564,
+    "average_latency": 1.3948253370578583,
+    "average_au": 2.0216168712846403,
+    "average_eu": 0.0648153246098909,
     "average_au_correct": 1.8672726653343024,
     "average_eu_correct": 0.06505003936531009,
-    "average_au_incorrect": 2.033296182003552,
-    "average_eu_incorrect": 0.06481279695372488
+    "average_au_incorrect": 2.0328182229401084,
+    "average_eu_incorrect": 0.06479829045886468
 }
