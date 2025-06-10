@@ -186,7 +186,7 @@ print(f"{average_entropy=}")
 print(f"{average_entropy_correct=}")
 print(f"{average_entropy_incorrect=}")
 print(f"{average_au=}")
-print(f"{average_eu}")
+print(f"{average_eu=}")
 
 evaluation_summary = {"samples": len(results),
                        "accuracy": accuracy,

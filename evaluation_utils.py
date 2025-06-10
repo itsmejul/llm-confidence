@@ -25,7 +25,8 @@ def get_ground_truth(prompt:dict)->float:
         ground_truth = ground_truth.replace(",", "") #convert 2,125 to 2125
         return int(ground_truth)
 
-def get_llm_answer(prompt:dict, prompting_technique:str)->float:
+def get_llm_answer(prompt:dict, prompting_technique:str, prompt_key:str)->float:
+    #prompt_key is just for debugging purposes
     try:
         raw_answer = ''.join(prompt['decoded_tokens'])
     except KeyError:
@@ -47,7 +48,7 @@ def get_llm_answer(prompt:dict, prompting_technique:str)->float:
 
     answer = answer.strip()
     if "." in answer:
-        answer = re.sub(r"[^0-9]+", "", answer) #remove any unit, only keep numbers
+        answer = re.sub(r"[^0-9.]+", "", answer) #remove any unit, only keep numbers
         try:
             answer = float(answer)
         except ValueError:
@@ -79,7 +80,7 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
         
 
         #extract the generated answer by the LLM
-        _, numeric_answer = get_llm_answer(prompt, prompting_technique)
+        _, numeric_answer = get_llm_answer(prompt, prompting_technique, prompt_key)
         if numeric_answer is None:
             buggy_sample +=1
             correctness_dict[prompt_key] = "buggy"
@@ -109,7 +110,7 @@ def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normaliz
 
         # identify the answer token indices
         answer_token_indices = []
-        _, llm_answer = get_llm_answer(prompt, prompting_technique)
+        _, llm_answer = get_llm_answer(prompt, prompting_technique,prompt_key)
         if llm_answer is None:
             entropy_dict[prompt_key] = None
             continue
@@ -190,7 +191,7 @@ def compute_logtoku_uncertainty(exp_tensor: dict, prompting_technique: str) -> d
         logtok_eu = []
 
         # Extract the LLM answer and match characters to token positions
-        _, llm_answer = get_llm_answer(prompt, prompting_technique)
+        _, llm_answer = get_llm_answer(prompt, prompting_technique, prompt_key)
         if llm_answer is None:
             result_dict[prompt_key] = {"avg_au": None, "avg_eu": None}
             continue
