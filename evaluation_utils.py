@@ -6,6 +6,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import pandas as pd
+from sklearn.cluster import KMeans
 
 def get_ground_truth(prompt:dict)->float:
     try:
@@ -187,7 +188,6 @@ def check_for_duplicate_questions(exp_tensor: dict):
 
     return duplicates
 
-#TODO check this method, if it properly works and everything is sound
 def compute_logtoku_uncertainty(exp_tensor: dict, prompting_technique: str) -> dict:
     result_dict = {}
     for prompt_key, prompt in exp_tensor.items():
@@ -227,10 +227,10 @@ def compute_logtoku_uncertainty(exp_tensor: dict, prompting_technique: str) -> d
                 logits = prompt['top_p_logits'][idx]
                 if len(logits) < 2:
                     continue
-                alpha = F.relu(logits + 1)
-                alpha_0 = torch.sum(alpha)
-                au = -torch.sum((alpha / alpha_0) * (torch.special.digamma(alpha + 1) - torch.special.digamma(alpha_0 + 1)))
-                eu = len(alpha) / torch.sum(alpha + 1)
+                alpha = F.relu(logits + 1) #checked
+                alpha_0 = torch.sum(alpha) #checked
+                au = -torch.sum((alpha / alpha_0) * (torch.special.digamma(alpha + 1) - torch.special.digamma(alpha_0 + 1))) #checked
+                eu = len(alpha) / torch.sum(alpha + 1) #checked
                 logtok_au.append(au.item())
                 logtok_eu.append(eu.item())
             except (IndexError, KeyError):
@@ -245,73 +245,41 @@ def compute_logtoku_uncertainty(exp_tensor: dict, prompting_technique: str) -> d
             result_dict[prompt_key] = {"avg_au": None, "avg_eu": None}
     return result_dict
 
-#TODO check this for soundness
-def plot_logtoku_quadrants(df: pd.DataFrame, output_path: str) -> None:
-    # ---- 1. filter & normalise ------------------------------------------------
-    df_plot = df.dropna(subset=["avg_au", "avg_eu"]).copy()
+def plot_logtoku_quadrants(df: pd.DataFrame, output_path: str, n_clusters=4) -> None:
+    # 1. Prepare data
+    df_clean = df.dropna(subset=["avg_au", "avg_eu"]).copy()
+    X = df_clean[["avg_au", "avg_eu"]].values
 
-    def _normalise_series(series: pd.Series) -> pd.Series:
-        vmin, vmax = series.min(), series.max()
-        if vmax == vmin:
-            return series * 0.0
-        return (series - vmin) / (vmax - vmin)
+    # 2. Fit KMeans
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+    labels = kmeans.fit_predict(X)
+    df_clean["cluster"] = labels
 
-    df_plot["norm_au"] = _normalise_series(df_plot["avg_au"])
-    df_plot["norm_eu"] = _normalise_series(df_plot["avg_eu"])
-
-    # ---- 2. quadrant classification ------------------------------------------
-    def classify_quadrant(row):
-        if row["norm_au"] >= 0.5 and row["norm_eu"] >= 0.5:
-            return "I"
-        elif row["norm_au"] < 0.5 and row["norm_eu"] >= 0.5:
-            return "II"
-        elif row["norm_au"] < 0.5 and row["norm_eu"] < 0.5:
-            return "III"
-        else:
-            return "IV"
-
-    df_plot["quadrant"] = df_plot.apply(classify_quadrant, axis=1)
-
-    # ---- 3. colour-map for correctness ---------------------------------------
-    color_map = {"yes": "green", "no": "red", "buggy": "gray"}
-    colors = df_plot["correct"].map(color_map).fillna("gray")
-
-    # ---- 4. plotting ----------------------------------------------------------
+    # 3. Plot
     fig, ax = plt.subplots(figsize=(8, 6))
-
-    # quadrant grid
-    ax.axvline(0.5, color="black", linestyle="--", linewidth=1)
-    ax.axhline(0.5, color="black", linestyle="--", linewidth=1)
-
-    # scatter
-    ax.scatter(
-        df_plot["norm_au"],
-        df_plot["norm_eu"],
-        c=colors,
+    scatter = ax.scatter(
+        df_clean["avg_au"],
+        df_clean["avg_eu"],
+        c=df_clean["cluster"],        # numeric labels → default colormap
         alpha=0.7,
         edgecolors="k",
         linewidths=0.5,
         s=40,
     )
 
-    # labels / legend
-    ax.set_xlabel("Normalised Aleatoric Uncertainty (AU)")
-    ax.set_ylabel("Normalised Epistemic Uncertainty (EU)")
-    ax.set_title("LogTokU Quadrants per Prompt")
+    ax.set_xlabel("Aleatoric Uncertainty (AU)")
+    ax.set_ylabel("Epistemic Uncertainty (EU)")
+    ax.set_title(f"LogTokU Clusters (k={n_clusters})")
 
-    legend_elements = [
-        Line2D([0], [0], marker="o", color="w", label="Correct",
-               markerfacecolor="green", markersize=8),
-        Line2D([0], [0], marker="o", color="w", label="Incorrect",
-               markerfacecolor="red", markersize=8),
-        Line2D([0], [0], marker="o", color="w", label="Buggy",
-               markerfacecolor="gray", markersize=8),
-    ]
-    ax.legend(handles=legend_elements, title="Prompt Outcome", loc="upper left")
+    # Add a legend for the clusters
+    legend1 = ax.legend(*scatter.legend_elements(),
+                        title="Cluster",
+                        loc="upper left")
+    ax.add_artist(legend1)
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=300)
-    plt.close()
+    plt.close(fig)
 
 def cos_similarity():
     #TODO
