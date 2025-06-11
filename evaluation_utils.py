@@ -38,7 +38,11 @@ def get_llm_answer(prompt:dict, prompting_technique:str, prompt_key:str)->float:
         if match:
             answer = match.group(1).strip()
         else:
-            return None, None
+            match = re.search(r"A:\s*(.*?)\s", answer) #search for answers without <eos e.g. A:205
+            if match:
+                answer = match.group(1).strip()
+            else:
+                return None, None
     else:
         try:
             _, answer = raw_answer.split('####')

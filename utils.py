@@ -2,6 +2,7 @@ import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch.nn.functional as F
+import re
 
 
 # ==========
@@ -69,13 +70,15 @@ def generate_with_top_p(
         top_probs_norm = top_probs / top_probs.sum()
         chosen_idx = torch.multinomial(top_probs_norm, 1).item()        
         chosen_token = top_indices[chosen_idx].unsqueeze(0)
-        decoded_chosen_tooken = tokenizer.decode(chosen_token)
-        chosen_tokens += decoded_chosen_tooken
+        decoded_chosen_token = tokenizer.decode(chosen_token)
+        chosen_tokens += decoded_chosen_token
 
-        # Stop if EOS token is generated
         if eos_token_id is not None and int(chosen_token) == eos_token_id:
             break
-        elif "<eos>" in chosen_tokens:
+        elif any(stop_seq in chosen_tokens for stop_seq in ["<eos>", "\n\n", "Q:", "more examples"]):
+            break
+        # Also check if we have a complete answer
+        elif re.search(r'A:\s*[\d\.]+\s*<eos>', chosen_tokens):
             break
 
         # Record

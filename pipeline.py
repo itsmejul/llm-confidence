@@ -6,8 +6,8 @@ import gc
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-#device_default = "cpu"
-device_default = "cuda" if torch.cuda.is_available() else "cpu" 
+device_default = "cpu" #TODO REMOVE
+#device_default = "cuda" if torch.cuda.is_available() else "cpu" #TODO uncomment
 from utils import generate_with_top_p, load_model
 import json
 import yaml
@@ -21,7 +21,7 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='cod_test',type=str,
+parser.add_argument('--experiment_name',default='test_llama2',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
 parser.add_argument('--n_samples',default=10,type=int,
     help='n_samples: Number of articles from the dataset')
@@ -33,11 +33,11 @@ parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default=200, type=int,
+parser.add_argument('--tokens_per_response', default=30, type=int,
     help='Generate n tokens in each response and then cut off')
 parser.add_argument('--local_dir', default='', type=str,                               
                     help="Use when loading the model locally / debugging locally.")
-parser.add_argument('--prompting_technique', default="cod", type=str,
+parser.add_argument('--prompting_technique', default="baseline", type=str,
                     help="Choose a prompting_technique, options are [cot,cod,baseline]. Baseline is the default: plain few-shot examples.")
 parser.add_argument('--top_p', default=0.95, type=float,
                     help="Generate tokens whichs probabilities sum up to top_p. If top_p is 1 it will generate ~32k tokenprobs, likely too large.")
@@ -106,6 +106,8 @@ print("Loaded Dataset.")
 # Load model
 #==========
 print(f"Loading model {model_name} from Huggingface on device {device}...")
+#TODO uncomment this
+"""
 if local_dir != '':
     model, tokenizer = load_model(model_name)
 else:
@@ -116,10 +118,16 @@ else:
         output_hidden_states=True, # Ensure the model config is set to output hidden states and scores
         return_dict_in_generate=True, # This flag makes the generate() method return additional info (see later)
     )
-    
-if device == "cuda":
+"""
+local_dir = "/home/max/Studium/Leipzig/Semst…ath_and_ML/hf_models/meta-llama/Llama-2-7b-hf" #TODO REMOVE this
+tokenizer = AutoTokenizer.from_pretrained(model_name)                                       #TODO REMOVE this
+model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cpu", torch_dtype="auto", output_hidden_states=True, return_dict_in_generate=True) #TODO REMOVE this
+
+#TODO uncomment this    
+"""if device == "cuda":
     print("moving model to cuda...")
     model.to("cuda")
+"""
 print("Successfully loaded model.")
 # Ensure model is fully initialized
 print("Warming up model...")
