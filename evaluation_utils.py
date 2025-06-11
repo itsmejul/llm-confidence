@@ -224,9 +224,9 @@ def compute_logtoku_uncertainty(exp_tensor: dict, prompting_technique: str) -> d
         # Compute AU and EU for answer token positions only
         for idx in answer_token_indices:
             try:
-                logits = prompt['top_p_logits'][idx]
-                if len(logits) < 2:
-                    continue
+                logits = prompt['top_p_logits'][idx]  #Tensor of shape (K,)
+                if logits.numel() == 0:
+                    continue # no candidates: skip
                 alpha = F.relu(logits + 1) #checked
                 alpha_0 = torch.sum(alpha) #checked
                 au = -torch.sum((alpha / alpha_0) * (torch.special.digamma(alpha + 1) - torch.special.digamma(alpha_0 + 1))) #checked
@@ -246,36 +246,65 @@ def compute_logtoku_uncertainty(exp_tensor: dict, prompting_technique: str) -> d
     return result_dict
 
 def plot_logtoku_quadrants(df: pd.DataFrame, output_path: str, n_clusters=4) -> None:
-    # 1. Prepare data
+    # 1. Clean & cluster
     df_clean = df.dropna(subset=["avg_au", "avg_eu"]).copy()
     X = df_clean[["avg_au", "avg_eu"]].values
+    k = min(len(df_clean), n_clusters)
+    kmeans = KMeans(n_clusters=k, random_state=0)
+    df_clean["cluster"] = kmeans.fit_predict(X)
 
-    # 2. Fit KMeans
-    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
-    labels = kmeans.fit_predict(X)
-    df_clean["cluster"] = labels
+    # 2. Map correctness to marker shapes
+    marker_map = {"yes": "o", "no": "X", "buggy": "s"}
+    df_clean["marker"] = df_clean["correct"].map(marker_map).fillna("o")
 
     # 3. Plot
     fig, ax = plt.subplots(figsize=(8, 6))
-    scatter = ax.scatter(
-        df_clean["avg_au"],
-        df_clean["avg_eu"],
-        c=df_clean["cluster"],        # numeric labels → default colormap
-        alpha=0.7,
-        edgecolors="k",
-        linewidths=0.5,
-        s=40,
-    )
+    cmap = plt.get_cmap("tab10")
+    for cluster_label in sorted(df_clean["cluster"].unique()):
+        sub_cluster = df_clean[df_clean["cluster"] == cluster_label]
+        col = cmap(cluster_label % 10)
+        for corr_label, marker in marker_map.items():
+            sub = sub_cluster[sub_cluster["correct"] == corr_label]
+            if sub.empty:
+                continue
+            ax.scatter(
+                sub["avg_au"],
+                sub["avg_eu"],
+                color=col,          
+                marker=marker,           
+                s=50,
+                edgecolors="k",
+                linewidths=0.5,
+                alpha=0.8,
+            )
 
     ax.set_xlabel("Aleatoric Uncertainty (AU)")
     ax.set_ylabel("Epistemic Uncertainty (EU)")
-    ax.set_title(f"LogTokU Clusters (k={n_clusters})")
+    ax.set_title(f"LogTokU Clusters (k={n_clusters}) + Correctness")
 
-    # Add a legend for the clusters
-    legend1 = ax.legend(*scatter.legend_elements(),
-                        title="Cluster",
-                        loc="upper left")
-    ax.add_artist(legend1)
+    # Build legends
+    # Cluster legend
+    cluster_handles = [
+        Line2D([0], [0], marker="o", color="w",
+               label=f"Cluster {i}",
+               markerfacecolor=plt.cm.tab10(i),
+               markersize=8)
+        for i in sorted(df_clean["cluster"].unique())
+    ]
+    # Correctness legend
+    corr_handles = [
+        Line2D([0], [0], marker=mk, color="k", label=lbl.capitalize(),
+               linestyle="", markersize=8)
+        for lbl, mk in marker_map.items()
+    ]
+
+    first_legend = ax.legend(handles=cluster_handles,
+                             title="Cluster",
+                             loc="upper left")
+    ax.add_artist(first_legend)
+    ax.legend(handles=corr_handles,
+              title="Correctness",
+              loc="lower right")
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=300)
