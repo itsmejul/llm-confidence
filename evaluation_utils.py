@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import pandas as pd
 from sklearn.cluster import KMeans
+from huggingface_hub import HfFolder, whoami
 
 def get_ground_truth(prompt:dict)->float:
     try:
@@ -310,7 +311,78 @@ def plot_logtoku_quadrants(df: pd.DataFrame, output_path: str, n_clusters=4) -> 
     plt.savefig(output_path, dpi=300)
     plt.close(fig)
 
-def cos_similarity():
-    #TODO
-    ...
+def cos_similarity(model_name:str, exp_tensor: torch.tensor):
+    from dotenv import load_dotenv
+    #==========
+    # Log in
+    #==========
+    load_dotenv()
+    hf_token = os.getenv('HF_TOKEN')
+    HfFolder.save_token(hf_token)
+    user = whoami()
+    print(f"logged in as {user["name"]}")
+
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu, faster than float 32
+        output_hidden_states=True, # Ensure the model config is set to output hidden states and scores
+        return_dict_in_generate=True, # This flag makes the generate() method return additional info (see later)
+    )
+    embedding_layer = model.get_input_embeddings()
+
+    from utils import compute_avg_cosine_similarities
+
+    dictionary = dict()
+
+    for prompt_key in exp_tensor.keys():
+        prompt = exp_tensor[prompt_key]
+        tokens = prompt['top_p_tokens']
+        cosines = compute_avg_cosine_similarities(tokens, embedding_layer)
+
+        dictionary[prompt_key] = cosines 
+
+    return dictionary
+
     
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+
+
+def plot_entropy_violin(df_correct, df_incorrect):
+    df_correct = df_correct.copy()
+    df_incorrect = df_incorrect.copy()
+
+    df_correct = df_correct.drop(columns=['label'], errors='ignore')
+    df_incorrect = df_incorrect.drop(columns=['label'], errors='ignore')
+
+    df_correct['label'] = 'correct'
+    df_incorrect['label'] = 'incorrect'
+
+    df_combined = pd.concat([df_correct[['entropy', 'label']], df_incorrect[['entropy', 'label']]])
+    df_combined['label'] = pd.Categorical(df_combined['label'], categories=['correct', 'incorrect'])
+
+    plt.figure(figsize=(8, 5))
+    sns.violinplot(data=df_combined, x='label', y='entropy', inner='quartile')
+    plt.title('Entropy Distribution')
+    plt.tight_layout()
+    plt.savefig("entropy_violin.png")
+
+
+def plot_cosine_violin(df_correct, df_incorrect):
+    df_correct = df_correct.copy()
+    df_incorrect = df_incorrect.copy()
+    df_correct['label'] = 'correct'
+    df_incorrect['label'] = 'incorrect'
+
+    df_combined = pd.concat([df_correct[['cosine', 'label']], df_incorrect[['cosine', 'label']]])
+
+    plt.figure(figsize=(8, 5))
+    sns.violinplot(data=df_combined, x='label', y='cosine', inner='quartile')
+    plt.title('Cosine Distribution')
+    plt.tight_layout()
+    plt.savefig("cosine_violin.png")
+
