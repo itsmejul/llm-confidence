@@ -142,10 +142,11 @@ if len(df_incorrect) > 0:
 else:
      average_entropy_incorrect = "no correct samples"
 
+#===== Cosine Similarity average =====
+#TODO 
 
 
-
-plot_entropy_violin(df_correct, df_incorrect)
+#plot_entropy_violin(df_correct, df_incorrect)
 
 # ===== Tokens used =====
 try:

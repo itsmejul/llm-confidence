@@ -8,6 +8,8 @@ from matplotlib.lines import Line2D
 import pandas as pd
 from sklearn.cluster import KMeans
 from huggingface_hub import HfFolder, whoami
+import os
+import seaborn as sns
 
 def get_ground_truth(prompt:dict)->float:
     try:
@@ -312,6 +314,7 @@ def plot_logtoku_quadrants(df: pd.DataFrame, output_path: str, n_clusters=4) -> 
     plt.close(fig)
 
 def cos_similarity(model_name:str, exp_tensor: torch.tensor):
+    #TODO only get answer tokens
     from dotenv import load_dotenv
     #==========
     # Log in
@@ -339,19 +342,13 @@ def cos_similarity(model_name:str, exp_tensor: torch.tensor):
     for prompt_key in exp_tensor.keys():
         prompt = exp_tensor[prompt_key]
         tokens = prompt['top_p_tokens']
-        cosines = compute_avg_cosine_similarities(tokens, embedding_layer)
+        cosines = compute_avg_cosine_similarities(tokens, embedding_layer.weight)
 
         dictionary[prompt_key] = cosines 
 
     return dictionary
 
     
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-
-
-
 def plot_entropy_violin(df_correct, df_incorrect):
     df_correct = df_correct.copy()
     df_incorrect = df_incorrect.copy()
