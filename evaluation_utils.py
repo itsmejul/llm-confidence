@@ -11,6 +11,7 @@ from huggingface_hub import HfFolder, whoami
 import os
 import seaborn as sns
 
+
 def get_ground_truth(prompt:dict)->float:
     try:
         raw_ground_truth = prompt['ground_truth']
@@ -47,7 +48,7 @@ def get_llm_answer(prompt:dict, prompting_technique:str, prompt_key:str)->float:
                 answer = match.group(1).strip()
             else:
                 return None, None
-    else:
+    else: #cot or cod
         try:
             _, answer = raw_answer.split('####')
             answer = answer.replace('<eos','')
@@ -111,17 +112,12 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
     
     return accuracy, correctness_dict, answer_dict
 
-def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normalize=False) -> dict:
-    entropy_dict = {}
-    for prompt_key in exp_tensor.keys():
-        prompt = exp_tensor[prompt_key]
-
-        # identify the answer token indices
+def get_answer_tokens(prompt:dict, prompting_technique:str, prompt_key:str)->list:
+    # identify the answer token indices
         answer_token_indices = []
         _, llm_answer = get_llm_answer(prompt, prompting_technique,prompt_key)
         if llm_answer is None:
-            entropy_dict[prompt_key] = None
-            continue
+            return None
         if isinstance(llm_answer,float): llm_answer = "{:.2f}".format(llm_answer)  # ensure consistent formatting
         else: llm_answer = str(llm_answer)   
         reverse_decoded_tokens = prompt['decoded_tokens'][::-1]
@@ -137,7 +133,19 @@ def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normaliz
                     used_indices.add(real_idx)
                     break
         answer_token_indices = sorted(answer_token_indices)  # to preserve order
+        return answer_token_indices
 
+
+def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normalize=False) -> dict:
+    entropy_dict = {}
+    for prompt_key in exp_tensor.keys():
+        prompt = exp_tensor[prompt_key]
+        # identify the answer token indices
+        answer_token_indices = get_answer_tokens(prompt, prompting_technique, prompt_key)
+        if answer_token_indices is None:
+            entropy_dict[prompt_key] = None
+            continue
+        
         # compute average entropy over answer tokens
         entropy_per_token = []
         for idx in answer_token_indices:
@@ -313,20 +321,18 @@ def plot_logtoku_quadrants(df: pd.DataFrame, output_path: str, n_clusters=4) -> 
     plt.savefig(output_path, dpi=300)
     plt.close(fig)
 
-def cos_similarity(model_name:str, exp_tensor: torch.tensor):
-    #TODO only get answer tokens
+def cos_similarity(model_name:str, exp_tensor: torch.tensor, prompting_technique:str):
     from dotenv import load_dotenv
-    #==========
-    # Log in
-    #==========
+    from transformers import AutoModelForCausalLM
+    from utils import compute_avg_cosine_similarities
+    # Log in to hf
     load_dotenv()
     hf_token = os.getenv('HF_TOKEN')
     HfFolder.save_token(hf_token)
     user = whoami()
     print(f"logged in as {user["name"]}")
 
-    from transformers import AutoTokenizer, AutoModelForCausalLM
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    #get the model
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu, faster than float 32
@@ -335,18 +341,24 @@ def cos_similarity(model_name:str, exp_tensor: torch.tensor):
     )
     embedding_layer = model.get_input_embeddings()
 
-    from utils import compute_avg_cosine_similarities
-
-    dictionary = dict()
-
+    cos_dictionary = dict()
     for prompt_key in exp_tensor.keys():
         prompt = exp_tensor[prompt_key]
-        tokens = prompt['top_p_tokens']
-        cosines = compute_avg_cosine_similarities(tokens, embedding_layer.weight)
-
-        dictionary[prompt_key] = cosines 
-
-    return dictionary
+        answer_token_indices = get_answer_tokens(prompt,prompting_technique, prompt_key)
+        if answer_token_indices is None:
+            continue
+        # compute average entropy over answer tokens
+        cos_per_token = []
+        for idx in answer_token_indices:
+            tokens = prompt['top_p_tokens'][idx]
+            cosines = compute_avg_cosine_similarities([tokens], embedding_layer.weight)
+            cos_per_token.append(cosines[0])
+        if len(cos_per_token) == 0:
+            avg_cosine = 0
+        else:
+            avg_cosine = sum(cos_per_token) / len(cos_per_token)
+        cos_dictionary[prompt_key] = avg_cosine 
+    return cos_dictionary
 
     
 def plot_entropy_violin(df_correct, df_incorrect):
