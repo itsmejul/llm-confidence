@@ -1,7 +1,8 @@
 # Fdb version 4
-["pdflatex"] 1750423854.22643 "/home/julian/dev/math-ml/paper/main.tex" "main.pdf" "main" 1750423854.34045 2
+["pdflatex"] 1750424945.90213 "/home/julian/dev/math-ml/paper/main.tex" "main.pdf" "main" 1750424946.00957 2
+  "../correlation_eval/correlation_stats.tex" 1750423853.65384 1062 104b1cd16f635ce2ab803761721e4e3a ""
   "/home/julian/.texlive/texmf-var/web2c/pdftex/pdflatex.fmt" 1747383870 2008237 c1982816152a1d5431a64d7996d09ca4 ""
-  "/home/julian/dev/math-ml/paper/main.tex" 1750423853.65472 459 3c0cf097f802892575997bc0b7338e08 ""
+  "/home/julian/dev/math-ml/paper/main.tex" 1750424945.5469 862 939608698ff97bddb213f8c1d091fd4e ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm" 1742685315 1324 c910af8c371558dc20f2d7822f66fe64 ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmmi12.tfm" 1742685315 1524 4414a8315f39513458b80dfc63bff03a ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmmi6.tfm" 1742685315 1512 f21f83efb36853c0b70002322c1ab3ad ""
@@ -13,6 +14,9 @@
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmsy10.tfm" 1742685315 1124 6c73e740cf17375f03eec0ee63599741 ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmsy6.tfm" 1742685315 1116 933a60c408fc0a863a92debe84b2d294 ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmsy8.tfm" 1742685315 1120 8b7d695260f3cff42e636090a8002094 ""
+  "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb" 1742685315 32080 340ef9bf63678554ee606688e7b5339d ""
+  "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1742685315 35752 024fb6c41858982481f6968b5fc26508 ""
+  "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb" 1742685315 32362 179c33bbf43f19adbb3825bb4e36e57a ""
   "/usr/share/texmf-dist/tex/generic/iftex/iftex.sty" 1742685315 7984 7dbb9280f03c0a315425f1b4f35d43ee ""
   "/usr/share/texmf-dist/tex/generic/iftex/ifvtex.sty" 1742685315 1057 525c2192b5febbd8c1f662c9468335bb ""
   "/usr/share/texmf-dist/tex/latex/base/article.cls" 1742685315 20144 63d8bacaf52e5abf4db3bc322373e1d4 ""
@@ -26,9 +30,9 @@
   "/usr/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def" 1742685315 29785 9f93ab201fe5dd053afcc6c1bcf7d266 ""
   "/usr/share/texmf-dist/tex/latex/tools/longtable.sty" 1742685315 15900 3cb191e576c7a313634d2813c55d4bf1 ""
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1742685315 42087 b0f9697c952c8f5a8eede4134282cb0d ""
-  "correlation_stats.tex" 0 -1 0 ""
-  "main.aux" 1750423854.3249 8 a94a2480d3289e625eea47cd1b285758 "pdflatex"
-  "main.tex" 1750423853.65472 459 3c0cf097f802892575997bc0b7338e08 ""
+  "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1747384002 30070 2c390b00126b1036e8876b6c3ea4d747 ""
+  "main.aux" 1750424945.9879 187 6a5a88415b5b4fe4deab41f8d7aaed86 "pdflatex"
+  "main.tex" 1750424945.5469 862 939608698ff97bddb213f8c1d091fd4e ""
   (generated)
   "main.aux"
   "main.log"

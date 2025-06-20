@@ -13,7 +13,12 @@
 
 \maketitle
 
+\section{Correlation between token entropy and semantic similarity of tokens}
+The entropy of token probability distributions has been proposed as a measure for LLM uncertainty.
+We propose a new uncertainty measure, which is the average pairwise cosine similarity of the top-p tokens of a probability distribution.
+In the following, we will show that there is a inverse relationship
+
 \section*{Table: Pearson and Spearman Correlations}
-\input{correlation_stats.tex}
+\input{../correlation_eval/correlation_stats.tex}
 
 \end{document}

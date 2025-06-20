@@ -341,7 +341,7 @@ def process_and_collect(experiment_results, remove_zero_one_points, dataset_name
 
 
 
-root_dir = "results/" #TODO use this in .py
+root_dir = "results/correlation_exp/" #TODO use this in .py
 #root_dir = "./../results/" #TODO use this in .ipynb
 results = load_results(root_dir)
 
