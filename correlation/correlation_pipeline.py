@@ -1,5 +1,7 @@
 import sys
 sys.stdout.reconfigure(line_buffering=True)
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
