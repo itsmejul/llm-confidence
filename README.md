@@ -15,7 +15,7 @@ python -m venv .venv && \
 ```
 To recreate the results of the correlation analysis between entropy and cosine similarity, run the ```correlation_pipeline``` with any compatible model and dataset name, e.g: 
 ```
-python correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llama-3.1-8B
+python correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llama-3.1-8B"
 ```
 This will create a .pt file in ```results/<dataset_name>/<model_name>```, which contains all necessary results (token entropies & cosines).
 These can later be loaded for the data analysis and visualization.  
@@ -39,4 +39,14 @@ We ran each model-dataset combination with the same parameters:
 * 100 max_tokens per prompt
 
 ## Data analysis and visualization
-Currently, this happens in the ```correlation.ipynb``` notebook, but later this will be moved into a standard python file.
+The code for the analysis and visualization of these experiements is in ```correlation/correlation_eval.py```. The reason that this is in another file is that the evalution does not need high compute. It can be run via: 
+```
+python correlation/correlation_eval.py
+```
+
+This will create the plots of all models-dataset combinations and save them in ```correlation_eval/correlation.png```. Also, it will calculate Pearson and Spearman correlation scores and save them in the same directory as both .csv and .tex files for easy further use. 
+
+## Model fitting
+Currently, this happens in the ```correlation.ipynb``` notebook, but later this will be moved into the ```correlation_eval.py``` file. 
+We fit a unimodal model to each of the model-dataset plots medians. 
+Later, we will then fit a linear model on the correlation between that model and the cosines, to see how well that model fits the cosine scores.
