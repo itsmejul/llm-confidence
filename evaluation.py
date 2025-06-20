@@ -8,9 +8,9 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='llama2_test_cod',type=str,
+parser.add_argument('--experiment_name',default='llama2_baseline_all',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
-parser.add_argument('--rerun',default='no',type=str,
+parser.add_argument('--rerun',default='yes',type=str,
     help='If it is set to "yes" then search for reurn file instead of output file tensor.')
 
 args = parser.parse_args()
@@ -80,7 +80,7 @@ entropy = compute_entropy(exp_tensor=results, prompting_technique=prompting_tech
 latency_per_prompt = get_latency(exp_tensor=results)
 tokens_per_prompt = get_tokens_per_prompt(exp_tensor=results)
 logtoku_results = compute_logtoku_uncertainty(exp_tensor=results,prompting_technique=prompting_technique)
-cosines = cos_similarity(exp_tensor=results, model_name = model_name )
+cosines = cos_similarity(exp_tensor=results, model_name = model_name, prompting_technique=prompting_technique)
 
 df_answers = pd.DataFrame([(k, v[0], v[1]) for k, v in answer_dict.items()],columns=["prompt_id", "llm_answer", "ground_truth"])
 df_correct = pd.DataFrame(list(correctness_dict.items()), columns=["prompt_id", "correct"])
@@ -142,10 +142,29 @@ if len(df_incorrect) > 0:
 else:
      average_entropy_incorrect = "no correct samples"
 
+#===== Cosine Similarity average =====
+try:
+    cosine_list = list(cosines.values())
+    cleaned_list = [x for x in cosine_list if x is not None]
+    average_cosine = sum(cleaned_list) / len(cleaned_list)
+except ZeroDivisionError:
+     average_entropy = "Bug occured." 
 
+#===== Cosine over all correct answered prompts =====
+df_correct = df_merged[df_merged["correct"] == "yes"]
+if len(df_correct) > 0:
+     average_cosine_correct = df_correct["cosine"].mean()
+else:
+     average_cosine_correct = "no correct samples"
 
+#===== Cosine over all incorrect answered prompts =====
+df_incorrect = df_merged[df_merged["correct"] == "no"]
+if len(df_incorrect) > 0:
+     average_cosine_incorrect = df_incorrect["cosine"].mean()
+else:
+     average_cosine_incorrect = "no correct samples"
 
-plot_entropy_violin(df_correct, df_incorrect)
+#plot_entropy_violin(df_correct, df_incorrect)
 
 # ===== Tokens used =====
 try:
@@ -195,6 +214,9 @@ print(f"{accuracy=}")
 print(f"{average_entropy=}")
 print(f"{average_entropy_correct=}")
 print(f"{average_entropy_incorrect=}")
+print(f"{average_cosine=}")
+print(f"{average_cosine_correct=}")
+print(f"{average_cosine_incorrect=}")
 print(f"{average_au=}")
 print(f"{average_eu=}")
 
@@ -203,14 +225,17 @@ evaluation_summary = {"samples": len(results),
                          "average_entropy": average_entropy,
                           "average_entropy_correct_samples": average_entropy_correct,
                            "average_entropy_incorrect_samples": average_entropy_incorrect,
-                            "average_tokens_used": average_tokens_used,
-                             "average_latency": average_latency,
-                              "average_au": average_au,
-                               "average_eu": average_eu,
-                                "average_au_correct": average_au_correct,
-                                 "average_eu_correct": average_eu_correct,
-                                  "average_au_incorrect": average_au_incorrect,
-                                   "average_eu_incorrect": average_eu_incorrect,}
+                           "average_cosine": average_cosine,
+                            "average_cosine_correct": average_cosine_correct,
+                              "average_cosine_incorrect": average_cosine_incorrect,
+                                "average_tokens_used": average_tokens_used,
+                                 "average_latency": average_latency,
+                                   "average_au": average_au,
+                                     "average_eu": average_eu,
+                                       "average_au_correct": average_au_correct,
+                                        "average_eu_correct": average_eu_correct,
+                                         "average_au_incorrect": average_au_incorrect,
+                                           "average_eu_incorrect": average_eu_incorrect,}
 
 with open(f"{experiment_path}/evaluation_summary.json", "w") as f:
         json.dump(evaluation_summary, f, indent=4)
