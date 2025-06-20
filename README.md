@@ -6,7 +6,7 @@ https://aclanthology.org/2024.eacl-long.129.pdf#:~:text=The%20term%20diversity%2
 # Correlation analysis between entropy and cosine similarity
 We analyze the correlation between the entropy of each tokens probability distribution that the LLM sampled from, with the average pairwise cosine similarity of the top-p tokens from said distribution.
 
-### Recreating results
+## Recreating results
 First, you need to create a python environment based on the ```requirements.txt``` file, for example:
 ```
 python -m venv .venv && \
@@ -18,11 +18,25 @@ To recreate the results of the correlation analysis between entropy and cosine s
 python correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llama-3.1-8B
 ```
 This will create a .pt file in ```results/<dataset_name>/<model_name>```, which contains all necessary results (token entropies & cosines).
-These can later be loaded for the data analysis and visualization.
+These can later be loaded for the data analysis and visualization.  
+We also provide a convenience script to run this on a HPC cluster; the script is located in ```scripts/rcp.sh```.
 
-We used these models (though most other models that are loaded as AutoModelForCausalLM should work fine as well): ```deepseek-ai/deepseek-llm-7b-base```, ```meta-llama/Llama-3.1-8B```, ```meta-llama/Llama-3.1-8B-Instruct```, ```mistralai/Mistral-7B-v0.1```, ```Qwen/Qwen3-8B```.  
-And we support these datasets (to add new datasets, you need to add a case for them in ```data_prep.py``` to turn them into a huggingface dataset with one column named ```prompt```): ```gsm8k```, ```writingprompts```, ```xsum```.  
-We evaluated each model-dataset combination with the same parameters: 100 prompts, and 100 max_tokens per prompt.
+## Models and Datasets
+We used five different LLM models for this experiment (though most other models that are loaded as AutoModelForCausalLM using huggingface transformers should work fine as well): 
+* ```deepseek-ai/deepseek-llm-7b-base```
+* ```meta-llama/Llama-3.1-8B```
+* ```meta-llama/Llama-3.1-8B-Instruct```
+* ```mistralai/Mistral-7B-v0.1```
+* ```Qwen/Qwen3-8B```  
 
-### Data analysis and visualization
+We evaluated each model on three datasets (to add new datasets, you need to add a case for them in ```data_prep.py``` to turn them into a huggingface dataset with one column named ```prompt```): 
+* ```gsm8k```
+* ```writingprompts```
+* ```xsum```
+
+We ran each model-dataset combination with the same parameters: 
+* 100 prompts
+* 100 max_tokens per prompt
+
+## Data analysis and visualization
 Currently, this happens in the ```correlation.ipynb``` notebook, but later this will be moved into a standard python file.
