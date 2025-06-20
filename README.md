@@ -6,6 +6,8 @@ https://aclanthology.org/2024.eacl-long.129.pdf#:~:text=The%20term%20diversity%2
 # Correlation analysis between entropy and cosine similarity
 We analyze the correlation between the entropy of each tokens probability distribution that the LLM sampled from, with the average pairwise cosine similarity of the top-p tokens from said distribution.
 
+![Plots of correlation](correlation_eval/correlation.png)
+
 ## Recreating results
 First, you need to create a python environment based on the ```requirements.txt``` file, for example:
 ```
