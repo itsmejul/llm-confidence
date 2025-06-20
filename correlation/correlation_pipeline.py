@@ -113,8 +113,8 @@ if __name__ == "__main__":
 
 print("saving to file")
 output_file = f"output_{timestamp}.pt"
-save_path = "results/" + dataset_name + "/" + model_save_name + "/" + output_file
-txt_save_path = "results/" + dataset_name + "/" + model_save_name + "/" + "hyperparams.txt"
+save_path = "results/correlation_exp/" + dataset_name + "/" + model_save_name + "/" + output_file
+txt_save_path = "results/correlation_exp/" + dataset_name + "/" + model_save_name + "/" + "hyperparams.txt"
 
 os.makedirs(os.path.dirname(save_path), exist_ok=True)
 torch.save(experiment_data, save_path)
@@ -123,3 +123,4 @@ os.makedirs(os.path.dirname(txt_save_path), exist_ok=True)
 with open(txt_save_path, "w") as f:
     f.write(model_name)
 print("saved")
+
