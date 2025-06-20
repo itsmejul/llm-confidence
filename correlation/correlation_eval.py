@@ -430,7 +430,10 @@ for i, model_name in enumerate(models):
 
 fig.suptitle("Entropy vs. Cosine Similarity (Median ± Std Dev)", fontsize=16)
 fig.tight_layout(rect=[0, 0, 0.96, 0.97])
-fig.savefig("correlation_eval/correlation.png", dpi=300, bbox_inches="tight")
+png_save_path = "results/correlation_eval/correlation.png"
+
+os.makedirs(os.path.dirname(png_save_path), exist_ok=True)
+fig.savefig(png_save_path, dpi=300, bbox_inches="tight")
 
 fig.show()
 
@@ -444,8 +447,8 @@ print("\n=== Correlation Statistics Table ===")
 print(stats_df.to_string())
 
 # Optional: save to CSV
-stats_df.to_csv("correlation_eval/correlation_stats.csv")
+stats_df.to_csv("results/correlation_eval/correlation_stats.csv")
 
-with open("correlation_eval/correlation_stats.tex", "w") as f:
+with open("results/correlation_eval/correlation_stats.tex", "w") as f:
     f.write(stats_df.to_latex(multicolumn=True, multirow=True, float_format="%.2f"))
 

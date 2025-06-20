@@ -19,7 +19,7 @@ To recreate the results of the correlation analysis between entropy and cosine s
 ```
 python correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llama-3.1-8B"
 ```
-This will create a .pt file in ```results/<dataset_name>/<model_name>```, which contains all necessary results (token entropies & cosines).
+This will create a .pt file in ```results/correlation_exp/<dataset_name>/<model_name>```, which contains all necessary results (token entropies & cosines).
 These can later be loaded for the data analysis and visualization.  
 We also provide a convenience script to run this on a HPC cluster; the script is located in ```scripts/rcp.sh```.
 
@@ -46,7 +46,7 @@ The code for the analysis and visualization of these experiements is in ```corre
 python correlation/correlation_eval.py
 ```
 
-This will create the plots of all models-dataset combinations and save them in ```correlation_eval/correlation.png```. Also, it will calculate Pearson and Spearman correlation scores and save them in the same directory as both .csv and .tex files for easy further use. 
+This will create the plots of all models-dataset combinations and save them in ```results/correlation_eval/correlation.png```. Also, it will calculate Pearson and Spearman correlation scores and save them in the same directory as both .csv and .tex files for easy further use. 
 
 ## Model fitting
 Currently, this happens in the ```correlation.ipynb``` notebook, but later this will be moved into the ```correlation_eval.py``` file. 
