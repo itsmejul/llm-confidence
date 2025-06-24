@@ -6,8 +6,8 @@ import gc
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-device_default = "cpu" 
-#device_default = "cuda" if torch.cuda.is_available() else "cpu" 
+#device_default = "cpu" 
+device_default = "cuda" if torch.cuda.is_available() else "cpu" 
 from utils import generate_with_top_p, load_model
 import json
 import yaml
@@ -106,7 +106,7 @@ print("Loaded Dataset.")
 # Load model
 #==========
 print(f"Loading model {model_name} from Huggingface on device {device}...")
-"""if local_dir != '':
+if local_dir != '':
     model, tokenizer = load_model(model_name)
 else:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -115,17 +115,16 @@ else:
         torch_dtype=torch.float16, # .bfloat16, is not supported by v100 gpu, faster than float 32
         output_hidden_states=True, # Ensure the model config is set to output hidden states and scores
         return_dict_in_generate=True, # This flag makes the generate() method return additional info (see later)
-    )"""
+    )
 
-local_dir = "/home/max/Studium/Leipzig/Semst…ath_and_ML/hf_models/Qwen/Qwen3-8B/" 
+"""local_dir = "/home/max/Studium/Leipzig/Semst…ath_and_ML/hf_models/Qwen/Qwen3-8B/" 
 tokenizer = AutoTokenizer.from_pretrained(model_name)                                       
 model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cpu", torch_dtype="auto", output_hidden_states=True, return_dict_in_generate=True) 
+"""
 
-
-#TODO UNCOMMENT this 
-#if device == "cuda":
-#    print("moving model to cuda...")
-#    model.to("cuda")
+if device == "cuda":
+    print("moving model to cuda...")
+    model.to("cuda")
 
 print("Successfully loaded model.")
 # Ensure model is fully initialized
