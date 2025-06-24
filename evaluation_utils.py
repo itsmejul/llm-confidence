@@ -360,7 +360,7 @@ def cos_similarity(model_name:str, exp_tensor: torch.tensor, prompting_technique
         cos_dictionary[prompt_key] = avg_cosine 
     return cos_dictionary
 
-    
+'''
 def plot_entropy_violin(df_correct, df_incorrect):
     df_correct = df_correct.copy()
     df_incorrect = df_incorrect.copy()
@@ -379,8 +379,8 @@ def plot_entropy_violin(df_correct, df_incorrect):
     plt.title('Entropy Distribution')
     plt.tight_layout()
     plt.savefig("entropy_violin.png")
-
-
+'''
+'''
 def plot_cosine_violin(df_correct, df_incorrect):
     df_correct = df_correct.copy()
     df_incorrect = df_incorrect.copy()
@@ -394,4 +394,84 @@ def plot_cosine_violin(df_correct, df_incorrect):
     plt.title('Cosine Distribution')
     plt.tight_layout()
     plt.savefig("cosine_violin.png")
+'''
+import matplotlib.pyplot as plt
+import numpy as np
 
+def plot_entropy_violin(df_correct, df_incorrect):
+    df_correct = df_correct.copy()
+    df_incorrect = df_incorrect.copy()
+
+    entropy_correct = df_correct['entropy'].dropna().values
+    entropy_incorrect = df_incorrect['entropy'].dropna().values
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    # Full violin for correct
+    parts_correct = ax.violinplot(entropy_correct, positions=[0], showmeans=False, showmedians=True,
+                                   showextrema=False, widths=0.9)
+    for pc in parts_correct['bodies']:
+        verts = pc.get_paths()[0].vertices
+        center = verts[:, 0].mean()
+        # keep left side only
+        verts[:, 0] = np.where(verts[:, 0] > center, center, verts[:, 0])
+        pc.set_verts([verts])
+        pc.set_alpha(0.6)
+
+    # Full violin for incorrect
+    parts_incorrect = ax.violinplot(entropy_incorrect, positions=[0], showmeans=False, showmedians=True,
+                                     showextrema=False, widths=0.9)
+    for pc in parts_incorrect['bodies']:
+        verts = pc.get_paths()[0].vertices
+        center = verts[:, 0].mean()
+        # keep right side only
+        verts[:, 0] = np.where(verts[:, 0] < center, center, verts[:, 0])
+        pc.set_verts([verts])
+        pc.set_alpha(0.6)
+
+    ax.set_xticks([0])
+    ax.set_xticklabels(['Entropy\nCorrect vs Incorrect'])
+    ax.set_ylabel('Entropy')
+    ax.set_title('Half Violin Plot')
+
+    plt.tight_layout()
+    plt.savefig("entropy_half_violin.png")
+
+def plot_cosine_violin(df_correct, df_incorrect):
+    df_correct = df_correct.copy()
+    df_incorrect = df_incorrect.copy()
+
+    cosine_correct = df_correct['cosine'].dropna().values
+    cosine_incorrect = df_incorrect['cosine'].dropna().values
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    # Full violin for correct
+    parts_correct = ax.violinplot(cosine_correct, positions=[0], showmeans=True, showmedians=False,
+                                   showextrema=True, widths=0.9, side="low")
+    #for pc in parts_correct['bodies']:
+    #    verts = pc.get_paths()[0].vertices
+    #    center = verts[:, 0].mean()
+        # keep left side only
+    #    verts[:, 0] = np.where(verts[:, 0] > center, center, verts[:, 0])
+    #    pc.set_verts([verts])
+    #    pc.set_alpha(0.6)
+
+    # Full violin for incorrect
+    parts_incorrect = ax.violinplot(cosine_incorrect, positions=[0], showmeans=True, showmedians=False,
+                                     showextrema=True, widths=0.9, side="high")
+    #for pc in parts_incorrect['bodies']:
+    #    verts = pc.get_paths()[0].vertices
+    #    center = verts[:, 0].mean()
+        # keep right side only
+    #    verts[:, 0] = np.where(verts[:, 0] < center, center, verts[:, 0])
+    #    pc.set_verts([verts])
+    #    pc.set_alpha(0.6)
+
+    ax.set_xticks([0])
+    ax.set_xticklabels(['Cosine\nCorrect vs Incorrect'])
+    ax.set_ylabel('Cosine')
+    ax.set_title('Half Violin Plot')
+
+    plt.tight_layout()
+    plt.savefig("cosine_half_violin.png")
