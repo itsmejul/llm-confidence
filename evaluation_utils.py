@@ -97,7 +97,14 @@ def calculate_accuracy(exp_tensor:torch.tensor, prompting_technique:str)->float:
             continue
 
         #compare LLM answer and ground truth
-        if float(numeric_answer) == float(numeric_ground_truth):
+        try:
+            float_numeric_answer = float(numeric_answer)
+            float_numeric_ground_truth = float(numeric_ground_truth)
+        except OverflowError:
+            incorrect_samples += 1
+            correctness_dict[prompt_key] = "no"
+            continue
+        if float_numeric_answer == float_numeric_ground_truth:
             correct_samples += 1
             correctness_dict[prompt_key] = "yes"
         else:
