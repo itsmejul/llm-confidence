@@ -1,5 +1,5 @@
 system_prompt: |
-  Answer the next question directly in the format: A: number without a unit <eos>, then stop.
+  Answer the next question directly without a unit.
   Do not return any preamble, explanation, or reasoning. 
 format: |
   Q: {question}

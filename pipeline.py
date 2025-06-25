@@ -6,8 +6,9 @@ import gc
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-#device_default = "cpu" 
-device_default = "cuda" if torch.cuda.is_available() else "cpu" 
+device_default = "cpu"
+#TODO UNCOMMENT 
+#device_default = "cuda" if torch.cuda.is_available() else "cpu" 
 from utils import generate_with_top_p, load_model
 import json
 import yaml
@@ -21,13 +22,13 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='test_qwen_baseline',type=str,
+parser.add_argument('--experiment_name',default='test_llama3',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
 parser.add_argument('--n_samples',default=3,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
     help='start_index: Start index which the dataset questions will be split')
-parser.add_argument('--model_name', default='Qwen/Qwen3-8B', type=str,#meta-llama/Llama-3.1-8B-Instruct # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf
+parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3-8B', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
@@ -122,9 +123,10 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cpu", torch_dtype="auto", output_hidden_states=True, return_dict_in_generate=True) 
 """
 
-if device == "cuda":
+#TODO UNCOMMENT
+"""if device == "cuda":
     print("moving model to cuda...")
-    model.to("cuda")
+    model.to("cuda")"""
 
 print("Successfully loaded model.")
 # Ensure model is fully initialized
