@@ -58,6 +58,7 @@ We analyze the performance of different LLMs on the GSM8K benchmark with respect
 
 ## Recreating results
 Venv
+First, add your Huggingface access token into .env as ```HF_TOKEN=<your token>```
 
 to run the experiment, run 
 
