@@ -52,3 +52,34 @@ This will create the plots of all models-dataset combinations and save them in `
 Currently, this happens in the ```correlation.ipynb``` notebook, but later this will be moved into the ```correlation_eval.py``` file. 
 We fit a unimodal model to each of the model-dataset plots medians. 
 Later, we will then fit a linear model on the correlation between that model and the cosines, to see how well that model fits the cosine scores.
+
+# Accuracy analysis over prompting techniques and entropy and cosine
+We analyze the performance of different LLMs on the GSM8K benchmark with respect to different prompting methods, and how the token entropy and cosines are related to the performance.
+
+## Recreating results
+Venv
+
+to run the experiment, run 
+
+```
+python pipeline.py --experiment_name=<name of folder in results> --model_name=<huggingface name> --n_samples=<max samples, otherwise all> --prompting_technique=<[cot, baseline, cod]>
+```
+
+
+
+Then, there will appear a folder in /experiments/<exp name>. This contains a .pt file with the logits and token distribtuion and generated answers for each promot.
+
+Then for the eval:
+
+```
+python evaluation.py --experiment_name=<exp name to evaluate> --rerun=<["yes", "false"]>
+```
+rerun="yes": Also include rerun.pt files (they will be merged)
+
+
+Since there will be a lot of buggy responses, we have the option to rerun those. They are determined during eval and saved in file experiments/name/buggy_prompts_to_rerun.csv .
+If we want to do the rerun, we run the pipeline again with rerun ... yes, this will look at the csv file of buggy samples and run those again and create a additional rerun.pt. Afterwards, we can run eval again with rerun="yes"
+
+```
+python pipeline.py --experiment_name=<name of folder in results> --model_name=<huggingface name> --n_samples=<max samples, otherwise all> --prompting_technique=<[cot, baseline, cod]> --rerun_buggy_samples='yes'
+```
