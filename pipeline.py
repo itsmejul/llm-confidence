@@ -6,9 +6,9 @@ import gc
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-device_default = "cpu"
+#device_default = "cpu"
 #TODO UNCOMMENT 
-#device_default = "cuda" if torch.cuda.is_available() else "cpu" 
+device_default = "cuda" if torch.cuda.is_available() else "cpu" 
 from utils import generate_with_top_p, load_model
 import json
 import yaml
@@ -124,9 +124,9 @@ model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cpu", torch
 """
 
 #TODO UNCOMMENT
-"""if device == "cuda":
+if device == "cuda":
     print("moving model to cuda...")
-    model.to("cuda")"""
+    model.to("cuda")
 
 print("Successfully loaded model.")
 # Ensure model is fully initialized
