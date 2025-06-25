@@ -8,7 +8,7 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='qwen_baseline_50',type=str,
+parser.add_argument('--experiment_name',default='test_deepseek',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
 parser.add_argument('--rerun',default='yes',type=str,
     help='If it is set to "yes" then search for reurn file instead of output file tensor.')
