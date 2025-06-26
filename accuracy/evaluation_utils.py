@@ -451,10 +451,10 @@ def plot_entropy_violin(df_correct, df_incorrect, experiment_path):
     ax.set_xticks([0])
     ax.set_xticklabels(['Entropy\nCorrect vs Incorrect'])
     ax.set_ylabel('Entropy')
-    ax.set_title('Half Violin Plot')
+    ax.set_title('Violin Plot')
 
     plt.tight_layout()
-    plt.savefig(experiment_path + "/entropy_half_violin.png") #TODO path
+    plt.savefig(experiment_path + "/entropy_violin.png") #TODO path
 
 def plot_cosine_violin(df_correct, df_incorrect, experiment_path):
     df_correct = df_correct.copy()
@@ -490,7 +490,7 @@ def plot_cosine_violin(df_correct, df_incorrect, experiment_path):
     ax.set_xticks([0])
     ax.set_xticklabels(['Cosine\nCorrect vs Incorrect'])
     ax.set_ylabel('Cosine')
-    ax.set_title('Half Violin Plot')
+    ax.set_title('Violin Plot')
 
     plt.tight_layout()
-    plt.savefig(experiment_path + "/cosine_half_violin.png") #TODO path
+    plt.savefig(experiment_path + "/cosine_violin.png") #TODO path
