@@ -1,0 +1,18 @@
+{
+    "samples": 10,
+    "accuracy": "4 / 6",
+    "average_entropy": 0.0,
+    "average_entropy_correct_samples": 0.0,
+    "average_entropy_incorrect_samples": 0.0,
+    "average_cosine": 1.0,
+    "average_cosine_correct": 1.0,
+    "average_cosine_incorrect": 1.0,
+    "average_tokens_used": 64.8,
+    "average_latency": 13.945820474624634,
+    "average_au": 0.0,
+    "average_eu": 0.043352762858072914,
+    "average_au_correct": 0.0,
+    "average_eu_correct": 0.043192545572916664,
+    "average_au_incorrect": 0.0,
+    "average_eu_incorrect": 0.043673197428385414
+}
