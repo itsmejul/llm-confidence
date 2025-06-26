@@ -1,8 +1,48 @@
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
+
+
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
+from datasets import load_dataset
 import torch.nn.functional as F
+import argparse
 import re
+#device_default = "cuda" if torch.cuda.is_available() else "cpu"
+import torch.nn.functional as F
+from itertools import combinations
+
+# ============================================================
+# Helper: Average Pairwise Cosine Similarity (PyTorch)
+# ============================================================
+def average_pairwise_cosine_similarity_torch(vectors):
+    """
+    Input should be a list of the top-p tokens during generation, for example. 
+    It will return the average of all pairwise cosine similarities between those.
+    Args:
+        vectors (List[torch.Tensor] or torch.Tensor): Either a list of 1D tensors or a 2D tensor of shape (k, d).
+    
+    Returns:
+        float: Average cosine similarity.
+    """
+    # If provided as a list, stack into a 2D tensor.
+    if isinstance(vectors, list):
+        vectors = torch.stack(vectors)  # Shape: (k, d)
+    
+    # Normalize along dimension 1 (for each vector)
+    vectors = F.normalize(vectors, p=2, dim=1)
+    
+    # Compute the full cosine similarity matrix using matrix multiplication.
+    similarity_matrix = vectors @ vectors.T  # Shape: (k, k)
+    
+    # Extract upper triangle (excluding self-similarity) for unique pairs.
+    k = vectors.shape[0]
+    i, j = torch.triu_indices(k, k, offset=1)
+    pairwise_sims = similarity_matrix[i, j]
+    
+    # Return average similarity as a float.
+    return pairwise_sims.mean().item()
+
 
 
 # ==========
@@ -28,6 +68,7 @@ def generate_with_top_p(
       - generated_tokens: Tensor of shape (max_tokens,) with generated token IDs
       - top_p_tokens: List[Tensor] of top-p token IDs at each step
       - top_p_logits: List[Tensor] of logits for those tokens
+
     """
     eos_token_id = tokenizer.eos_token_id
     
@@ -48,7 +89,9 @@ def generate_with_top_p(
     full_logits = []
     full_probs = []
 
+
     chosen_tokens = '' #for stopping if <eos> is generated
+
     for _ in range(max_tokens):
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
         logits = outputs.logits[:, -1, :].squeeze(0)
@@ -68,6 +111,7 @@ def generate_with_top_p(
 
         # Sample
         top_probs_norm = top_probs / top_probs.sum()
+
         chosen_idx = torch.multinomial(top_probs_norm, 1).item()        
         chosen_token = top_indices[chosen_idx].unsqueeze(0)
         decoded_chosen_token = tokenizer.decode(chosen_token)
@@ -83,6 +127,7 @@ def generate_with_top_p(
 
         # Record
         generated.append(chosen_token)
+
         top_p_tokens.append(top_indices.cpu())
         top_p_logits.append(top_logits.cpu())
         top_p_probs.append(top_probs.cpu())
@@ -100,6 +145,7 @@ def generate_with_top_p(
     for token in generated:
         answer_tokens.append(tokenizer.decode(token))
 
+
     if not generated: #edge case when first token is eos token, then generated will be empty 
         return {
             "generated_tokens": torch.tensor([], dtype=torch.long),
@@ -109,10 +155,12 @@ def generate_with_top_p(
             "top_p_probs": [],
         }
 
+
     return {
         "generated_tokens": torch.cat(generated, dim=0), #token ids
         "decoded_tokens": answer_tokens, #decoded tokens
         "top_p_tokens": top_p_tokens,
+
         "top_p_logits": top_p_logits,
         "top_p_probs": top_p_probs,
         #"full_logits" : full_logits,
@@ -149,6 +197,148 @@ def average_pairwise_cosine_similarity_torch(vectors):
     
     # Return average similarity as a float.
     return pairwise_sims.mean().item()
+
+def generate_with_top_p_corr(
+    model: PreTrainedModel,
+    tokenizer: PreTrainedTokenizer,
+    prompt: str,
+    p: float,
+    max_tokens: int,
+    device: torch.device = None
+) -> Dict[str, Any]:
+    """
+    Generate tokens with top-p sampling for a single prompt, tracking each step.
+
+    Returns a dict with:
+      - generated_tokens: Tensor of shape (max_tokens,) with generated token IDs
+      - top_p_tokens: List[Tensor] of top-p token IDs at each step
+      - top_p_logits: List[Tensor] of logits for those tokens
+      - top_p_probs: List[Tensor] of their probabilities
+    """
+    eos_token_id = tokenizer.eos_token_id
+    
+    model.eval()
+    if device is None:
+        device = next(model.parameters()).device
+
+    # Tokenize prompt with attention mask
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded.input_ids.to(device)
+    attention_mask = encoded.attention_mask.to(device)
+
+    generated = []
+    top_p_tokens = []
+    #full_probs = []
+    top_p_probs = []
+
+    for _ in range(max_tokens):
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+        logits = outputs.logits[:, -1, :].squeeze(0)
+        probs = torch.softmax(logits, dim=-1)
+
+        # save full distribution
+        #full_probs.append(probs.detach().cpu())
+
+        # Identify top-p set
+        sorted_probs, sorted_indices = torch.sort(probs, descending=True)
+        cum_probs = torch.cumsum(sorted_probs, dim=0)
+        cutoff = torch.searchsorted(cum_probs, p).item() + 1
+        top_indices = sorted_indices[:cutoff]
+        top_logits = logits[top_indices]
+        top_probs = probs[top_indices]
+
+        # Sample
+        top_probs_norm = top_probs / top_probs.sum()
+        chosen_idx = torch.multinomial(top_probs_norm, 1).item()
+        chosen_token = top_indices[chosen_idx].unsqueeze(0)
+
+        # Stop if EOS token is generated
+        if eos_token_id is not None and int(chosen_token) == eos_token_id:
+            break
+
+        # Record
+        generated.append(chosen_token)
+        #top_p_tokens.append(top_indices)
+        #top_p_logits.append(top_logits)
+        top_p_probs.append(top_probs)
+        top_p_tokens.append(top_indices.cpu())
+
+        # Append for next step
+        input_ids = torch.cat([input_ids, chosen_token.unsqueeze(0)], dim=-1)
+        attention_mask = torch.cat(
+            [attention_mask, torch.ones((1, 1), dtype=attention_mask.dtype, device=device)],
+            dim=1
+        )
+        del logits, probs, top_logits, top_probs, sorted_probs, sorted_indices, cum_probs
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
+
+    return {
+        "generated_tokens": torch.cat(generated, dim=0), #token ids
+        "top_p_tokens": top_p_tokens,
+        "top_p_probs" : top_p_probs,
+        #"full_probs" : full_probs,
+    }
+
+
+def generate_with_top_p_batch(
+    model: PreTrainedModel,
+    tokenizer: PreTrainedTokenizer,
+    prompts: List[str],
+    p: float,
+    max_tokens: int,
+    device: torch.device = None
+) -> Dict[str, Any]:
+    """
+    Batch version: generate tokens for multiple prompts in parallel using top-p sampling.
+
+    Returns:
+      - generated_tokens: Tensor of shape (batch_size, max_tokens)
+    """
+    model.eval()
+    if device is None:
+        device = next(model.parameters()).device
+
+    # Tokenize batch with padding and attention mask
+    batch = tokenizer(prompts, return_tensors="pt", padding=True)
+    input_ids = batch.input_ids.to(device)
+    attention_mask = batch.attention_mask.to(device)
+    batch_size = input_ids.size(0)
+
+    # Prepare output tensor
+    generated = torch.zeros((batch_size, max_tokens), dtype=torch.long, device=device)
+
+    for step in range(max_tokens):
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+        logits = outputs.logits[:, -1, :]
+        probs = torch.softmax(logits, dim=-1)
+
+        next_tokens = []
+        for i in range(batch_size):
+            probs_i = probs[i]
+            sorted_probs, sorted_indices = torch.sort(probs_i, descending=True)
+            cum_probs = torch.cumsum(sorted_probs, dim=0)
+            cutoff = torch.searchsorted(cum_probs, p).item() + 1
+            top_indices = sorted_indices[:cutoff]
+            top_probs = probs_i[top_indices]
+            top_probs_norm = top_probs / top_probs.sum()
+            sampled = top_indices[torch.multinomial(top_probs_norm, 1)]
+            next_tokens.append(sampled)
+
+        # Stack and record
+        next_tokens = torch.stack(next_tokens)
+        generated[:, step] = next_tokens
+
+        # Append for next step
+        input_ids = torch.cat([input_ids, next_tokens.unsqueeze(-1)], dim=-1)
+        attention_mask = torch.cat(
+            [attention_mask, torch.ones((batch_size, 1), dtype=attention_mask.dtype, device=device)],
+            dim=1
+        )
+
+    return {"generated_tokens": generated}
+
+
 
 def compute_avg_cosine_similarities(token_ids_list, embedding_matrix):
     """
@@ -229,7 +419,26 @@ def print_token_info(res, entropies, cosines, tokenizer, precision=2):
             row += f"|{tid_str:>{id_col_width}}, {logit_str:>{logit_col_width}}, {prob_str:>{prob_col_width}}"
         print(row)
 
+
 def load_model(model_name):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto", output_hidden_states=True)
+
+def load_model_old(model_name, local_dir="./models/llama3_70b", output_hidden_states=True, return_dict_in_generate=True):
+    import os
+    if os.path.exists(local_dir):
+        print(f"Loading model from local directory: {local_dir}")
+        tokenizer = AutoTokenizer.from_pretrained(local_dir)
+        model = AutoModelForCausalLM.from_pretrained(local_dir, torch_dtype="auto", output_hidden_states=output_hidden_states, return_dict_in_generate=return_dict_in_generate)
+    else:
+        print(f"Local directory not found. Downloading model '{model_name}' from Hugging Face Hub...")
+        """tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto", output_hidden_states=True)
+
+        os.makedirs(local_dir, exist_ok=True)
+        tokenizer.save_pretrained(local_dir)
+        model.save_pretrained(local_dir)
+        print(f"Model downloaded and saved locally to: {local_dir}")"""
+
+
     return model, tokenizer
