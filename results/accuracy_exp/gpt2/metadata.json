@@ -1,0 +1,9 @@
+{
+    "model": "distilbert/distilgpt2",
+    "dataset": "openai/gsm8k",
+    "device": "cpu",
+    "experiment_name": "gpt2",
+    "tokens_per_response": 2,
+    "prompting_technique": "baseline",
+    "top_p": 0.95
+}
