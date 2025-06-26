@@ -6,9 +6,9 @@ import gc
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
-#device_default = "cpu"
+device_default = "cpu"
 #TODO UNCOMMENT 
-device_default = "cuda" if torch.cuda.is_available() else "cpu" 
+#device_default = "cuda" if torch.cuda.is_available() else "cpu" 
 from utils import generate_with_top_p, load_model
 import json
 import yaml
@@ -22,13 +22,13 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='test_deepseek',type=str,
+parser.add_argument('--experiment_name',default='local_test_llama3',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
-parser.add_argument('--n_samples',default=3,type=int,
+parser.add_argument('--n_samples',default=5,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
     help='start_index: Start index which the dataset questions will be split')
-parser.add_argument('--model_name', default='deepseek-ai/deepseek-llm-7b-base', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf
+parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3-8B', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
@@ -124,9 +124,9 @@ model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cpu", torch
 """
 
 #TODO UNCOMMENT
-if device == "cuda":
+"""if device == "cuda":
     print("moving model to cuda...")
-    model.to("cuda")
+    model.to("cuda")"""
 
 print("Successfully loaded model.")
 # Ensure model is fully initialized

@@ -1,0 +1,9 @@
+{
+    "model": "meta-llama/Meta-Llama-3-8B",
+    "dataset": "openai/gsm8k",
+    "device": "cpu",
+    "experiment_name": "local_test_llama3",
+    "tokens_per_response": 20,
+    "prompting_technique": "baseline",
+    "top_p": 0.95
+}
