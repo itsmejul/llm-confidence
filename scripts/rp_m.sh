@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --job-name=2_cot_10_llama3
+#SBATCH --job-name=test_json_llama2
 #SBATCH --partition=clara
 #SBATCH --gpus=v100
 #SBATCH --ntasks=1
 #SBATCH --mem=32G
-#SBATCH --time=02:00:00
+#SBATCH --time=01:00:00
 #SBATCH -o /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.out-%j
 #SBATCH -e /home/sc.uni-leipzig.de/ag52peve/jobfiles/log/%x.err-%j
 
@@ -25,4 +25,4 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="2_test_cot_llama3" --n_samples=10 --start_index=0 --model_name="meta-llama/Meta-Llama-3-8B" --device="cuda" --tokens_per_response=1000 --prompting_technique="cot" --rerun_buggy_samples="no"
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="test_json_llama2" --n_samples=50 --start_index=0 --model_name="meta-llama/Meta-Llama-3-8B" --device="cuda" --tokens_per_response=20 --prompting_technique="baseline" --rerun_buggy_samples="no"
