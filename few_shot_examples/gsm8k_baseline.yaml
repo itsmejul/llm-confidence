@@ -1,6 +1,6 @@
 system_prompt: |
-  Do not return any preamble, explanation, or reasoning. 
   Answer the next question directly without a unit and respond only with valid JSON.
+  Do not return any preamble, explanation, or reasoning.
 format: |
   Q: {question}
   A: {answer}
