@@ -39,7 +39,7 @@ def get_llm_answer(prompt:dict, prompting_technique:str, prompt_key:str)->float:
     
     if prompting_technique == "baseline": #few-shot
         answer = raw_answer
-        match = re.search(r"A:\s*(.*?)\s*<eos", answer)
+        match = re.search(r"A:\s*(.*?)\s*<eos", answer) #re.search(r'\{\s*["\']answer["\']\s*:\s*[-]?\d+(\.\d+)?\s*\}', chosen_tokens)
         if match:
             answer = match.group(1).strip()
         else:
