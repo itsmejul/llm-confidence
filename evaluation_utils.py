@@ -38,20 +38,18 @@ def get_llm_answer(prompt:dict, prompting_technique:str, prompt_key:str)->float:
         return None, None
     
     if prompting_technique == "baseline": #few-shot
-        answer = raw_answer
-        match = re.search(r"A:\s*(.*?)\s*<eos", answer) #re.search(r'\{\s*["\']answer["\']\s*:\s*[-]?\d+(\.\d+)?\s*\}', chosen_tokens)
+        answer = raw_answer.strip()
+        #match = re.search(r"A:\s*(.*?)\s*<eos", answer) 
+        match = re.search(r'\{\s*["\']answer["\']\s*:\s*[-]?\d+(\.\d+)?\s*\}', answer, re.IGNORECASE)
         if match:
-            answer = match.group(1).strip()
+            answer = match.group(0)
+            answer = answer.replace("{'answer':",'').replace('{"answer":','').replace('}', '') #remove json
         else:
-            match = re.search(r"A:\s*(.*?)\s", answer) #search for answers without <eos e.g. A:205
-            if match:
-                answer = match.group(1).strip()
-            else:
-                return None, None
+            return None, None
     else: #cot or cod
         try:
             _, answer = raw_answer.split('####')
-            answer = answer.replace('<eos','')
+            answer = answer.replace("{'answer':",'').replace('{"answer":','').replace('}', '') #remove json
         except ValueError:
             return None, None
 

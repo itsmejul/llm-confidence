@@ -9,7 +9,7 @@ import argparse
 #device_default = "cpu"
 #TODO UNCOMMENT 
 device_default = "cuda" if torch.cuda.is_available() else "cpu" 
-from utils.utils import generate_with_top_p, load_model
+from utils import generate_with_top_p, load_model
 import json
 import yaml
 import os
