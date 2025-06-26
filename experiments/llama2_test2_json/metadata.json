@@ -1,9 +1,0 @@
-{
-    "model": "meta-llama/Llama-2-7b-hf",
-    "dataset": "openai/gsm8k",
-    "device": "cpu",
-    "experiment_name": "llama2_test2_json",
-    "tokens_per_response": 15,
-    "prompting_technique": "baseline",
-    "top_p": 0.95
-}
