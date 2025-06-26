@@ -9,7 +9,7 @@ import argparse
 device_default = "cpu"
 #TODO UNCOMMENT 
 #device_default = "cuda" if torch.cuda.is_available() else "cpu" 
-from utils import generate_with_top_p, load_model
+from utils.utils import generate_with_top_p, load_model
 import json
 import yaml
 import os
@@ -22,19 +22,19 @@ import pandas as pd
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='local_test_llama3',type=str,
+parser.add_argument('--experiment_name',default='qwen3_test2_json',type=str,
     help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
-parser.add_argument('--n_samples',default=5,type=int,
+parser.add_argument('--n_samples',default=1,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
     help='start_index: Start index which the dataset questions will be split')
-parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3-8B', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf
+parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3-8B', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf, mistralai/Mistral-7B-v0.1
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default=20, type=int,
+parser.add_argument('--tokens_per_response', default=15, type=int,
     help='Generate n tokens in each response and then cut off')
 parser.add_argument('--local_dir', default='', type=str,                               
                     help="Use when loading the model locally / debugging locally.")
@@ -167,14 +167,14 @@ if __name__ == "__main__":
             prompt_examples = yaml.safe_load(f)
     #system_prompt += "Format:" + prompt_examples['format'] #TODO maybe uncomment again
     for example in prompt_examples['fewshot']:
-        system_prompt += "Q: " + example["question"]
-        system_prompt += "A:" + example["answer"]
+        system_prompt += example["question"]
+        system_prompt += example["answer"] + "\n"
     system_prompt += prompt_examples["system_prompt"]
     
     print("Starting to generate...")
     for i,question in enumerate(questions):
-        prompt = system_prompt + "Q: " + question
-        #print(prompt)
+        prompt = system_prompt + question
+        print(prompt)
         answer = answers[i]
 
         torch.cuda.empty_cache()
