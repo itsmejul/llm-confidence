@@ -1,11 +1,13 @@
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
+
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from datasets import load_dataset
 import torch.nn.functional as F
 import argparse
+import re
 #device_default = "cuda" if torch.cuda.is_available() else "cpu"
 import torch.nn.functional as F
 from itertools import combinations
@@ -42,6 +44,7 @@ def average_pairwise_cosine_similarity_torch(vectors):
     return pairwise_sims.mean().item()
 
 
+
 # ==========
 # Helper for generating the tokens and saving their logits and probabilities
 # ==========
@@ -65,7 +68,7 @@ def generate_with_top_p(
       - generated_tokens: Tensor of shape (max_tokens,) with generated token IDs
       - top_p_tokens: List[Tensor] of top-p token IDs at each step
       - top_p_logits: List[Tensor] of logits for those tokens
-      - top_p_probs: List[Tensor] of their probabilities
+
     """
     eos_token_id = tokenizer.eos_token_id
     
@@ -87,6 +90,8 @@ def generate_with_top_p(
     full_probs = []
 
 
+    chosen_tokens = '' #for stopping if <eos> is generated
+
     for _ in range(max_tokens):
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
         logits = outputs.logits[:, -1, :].squeeze(0)
@@ -106,18 +111,23 @@ def generate_with_top_p(
 
         # Sample
         top_probs_norm = top_probs / top_probs.sum()
-        chosen_idx = torch.multinomial(top_probs_norm, 1).item()
-        chosen_token = top_indices[chosen_idx].unsqueeze(0)
 
-        # Stop if EOS token is generated
+        chosen_idx = torch.multinomial(top_probs_norm, 1).item()        
+        chosen_token = top_indices[chosen_idx].unsqueeze(0)
+        decoded_chosen_token = tokenizer.decode(chosen_token)
+        chosen_tokens += decoded_chosen_token
+
         if eos_token_id is not None and int(chosen_token) == eos_token_id:
+            break
+        elif any(stop_seq in chosen_tokens for stop_seq in ["<eos>", "\n\n", "Q:", "more examples"]):
+            break
+        # Also check if we have a complete answer
+        elif re.search(r'A:\s*[\d\.]+\s*<eos>', chosen_tokens):
             break
 
         # Record
         generated.append(chosen_token)
-        #top_p_tokens.append(top_indices)
-        #top_p_logits.append(top_logits)
-        #top_p_probs.append(top_probs)
+
         top_p_tokens.append(top_indices.cpu())
         top_p_logits.append(top_logits.cpu())
         top_p_probs.append(top_probs.cpu())
@@ -135,15 +145,59 @@ def generate_with_top_p(
     for token in generated:
         answer_tokens.append(tokenizer.decode(token))
 
+
+    if not generated: #edge case when first token is eos token, then generated will be empty 
+        return {
+            "generated_tokens": torch.tensor([], dtype=torch.long),
+            "decoded_tokens": [],
+            "top_p_tokens": [],
+            "top_p_logits": [],
+            "top_p_probs": [],
+        }
+
+
     return {
         "generated_tokens": torch.cat(generated, dim=0), #token ids
         "decoded_tokens": answer_tokens, #decoded tokens
         "top_p_tokens": top_p_tokens,
-        #"top_p_logits": top_p_logits,
+
+        "top_p_logits": top_p_logits,
         "top_p_probs": top_p_probs,
         #"full_logits" : full_logits,
-        "full_probs" : full_probs,
+        #"full_probs" : full_probs,
     }
+
+# ============================================================
+# Helper: Average Pairwise Cosine Similarity (PyTorch)
+# ============================================================
+def average_pairwise_cosine_similarity_torch(vectors):
+    """
+    Input should be a list of the top-p tokens during generation, for example. 
+    It will return the average of all pairwise cosine similarities between those.
+    Args:
+        vectors (List[torch.Tensor] or torch.Tensor): Either a list of 1D tensors or a 2D tensor of shape (k, d).
+    
+    Returns:
+        float: Average cosine similarity.
+    """
+    # If provided as a list, stack into a 2D tensor.
+    if isinstance(vectors, list):
+        vectors = torch.stack(vectors)  # Shape: (k, d)
+    
+    # Normalize along dimension 1 (for each vector)
+    vectors = F.normalize(vectors, p=2, dim=1)
+    
+    # Compute the full cosine similarity matrix using matrix multiplication.
+    similarity_matrix = vectors @ vectors.T  # Shape: (k, k)
+    
+    # Extract upper triangle (excluding self-similarity) for unique pairs.
+    k = vectors.shape[0]
+    i, j = torch.triu_indices(k, k, offset=1)
+    pairwise_sims = similarity_matrix[i, j]
+    
+    # Return average similarity as a float.
+    return pairwise_sims.mean().item()
+
 def generate_with_top_p_corr(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,
@@ -285,6 +339,7 @@ def generate_with_top_p_batch(
     return {"generated_tokens": generated}
 
 
+
 def compute_avg_cosine_similarities(token_ids_list, embedding_matrix):
     """
     Compute average pairwise cosine similarities for top-p tokens at each step.
@@ -364,7 +419,12 @@ def print_token_info(res, entropies, cosines, tokenizer, precision=2):
             row += f"|{tid_str:>{id_col_width}}, {logit_str:>{logit_col_width}}, {prob_str:>{prob_col_width}}"
         print(row)
 
-def load_model(model_name, local_dir="./models/llama3_70b", output_hidden_states=True, return_dict_in_generate=True):
+
+def load_model(model_name):
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto", output_hidden_states=True)
+
+def load_model_old(model_name, local_dir="./models/llama3_70b", output_hidden_states=True, return_dict_in_generate=True):
     import os
     if os.path.exists(local_dir):
         print(f"Loading model from local directory: {local_dir}")
@@ -379,5 +439,6 @@ def load_model(model_name, local_dir="./models/llama3_70b", output_hidden_states
         tokenizer.save_pretrained(local_dir)
         model.save_pretrained(local_dir)
         print(f"Model downloaded and saved locally to: {local_dir}")"""
+
 
     return model, tokenizer
