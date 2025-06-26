@@ -1,0 +1,9 @@
+{
+    "model": "mistralai/Mistral-7B-v0.1",
+    "dataset": "openai/gsm8k",
+    "device": "cpu",
+    "experiment_name": "mistral_test_json",
+    "tokens_per_response": 15,
+    "prompting_technique": "baseline",
+    "top_p": 0.95
+}

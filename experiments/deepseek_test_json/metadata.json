@@ -1,0 +1,9 @@
+{
+    "model": "deepseek-ai/deepseek-llm-7b-base",
+    "dataset": "openai/gsm8k",
+    "device": "cpu",
+    "experiment_name": "deepseek_test_json",
+    "tokens_per_response": 15,
+    "prompting_technique": "baseline",
+    "top_p": 0.95
+}
