@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=cot_deepseek_json
+#SBATCH --job-name=cod_llama2_json
 #SBATCH --partition=paula
 #SBATCH --gpus=a30
 #SBATCH --ntasks=1
@@ -25,4 +25,4 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="cot_test_json_deepseek" --n_samples=10 --start_index=0 --model_name="deepseek-ai/deepseek-llm-7b-base" --device="cuda" --tokens_per_response=1000 --prompting_technique="cot" --rerun_buggy_samples="no"
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/pipeline.py --experiment_name="cod_test_json_llama2" --n_samples=20 --start_index=0 --model_name="meta-llama/Llama-2-7b-hf" --device="cuda" --tokens_per_response=1000 --prompting_technique="cod" --rerun_buggy_samples="no"
