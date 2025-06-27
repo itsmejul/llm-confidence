@@ -1,5 +1,12 @@
-### Math&ML research project about analyzing LLM token probability distributions
+# Semantic Token Top-p Similarity as an LLM uncertainty measure
+This repository contains the code for our research project which is part of the Math&ML project. We propose a new measure for LLM uncertainty, the **S**emantic **To**ken top-**P** **S**imilarity (STOPS). 
+We explore how this measure correlates with token entropy, an exisiting uncertainty measure. 
+Furthermore, we analyze how STOPS is related to model performance and create a classification model to predict model answer correctness based on STOPS and entropy. 
+We solidify our findings by reproducing the results over a variety of datasets, models, and propting approaches.
 
+# Contents
+- [Correlation between entropy and semantic similarity](#correlation-analysis-between-entropy-and-cosine-similarity)
+- [Semantic similarity as a measure of model accuracy](#accuracy-analysis-over-prompting-techniques-and-entropy-and-cosine)
 
 
 # Correlation analysis between entropy and cosine similarity
