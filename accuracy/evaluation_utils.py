@@ -148,7 +148,7 @@ def compute_entropy(exp_tensor: torch.tensor, prompting_technique: str, normaliz
         prompt = exp_tensor[prompt_key]
         # identify the answer token indices
         answer_token_indices = get_answer_tokens(prompt, prompting_technique, prompt_key)
-        print(answer_token_indices)
+        #print(answer_token_indices)
         if answer_token_indices is None:
             entropy_dict[prompt_key] = None
             continue
@@ -359,7 +359,7 @@ def cos_similarity(model_name:str, exp_tensor: torch.tensor, prompting_technique
         prompt = exp_tensor[prompt_key]
         
         answer_token_indices = get_answer_tokens(prompt,prompting_technique, prompt_key)
-        print(answer_token_indices)
+        #print(answer_token_indices)
         if answer_token_indices is None:
             cos_dictionary[prompt_key] = None
             continue
@@ -373,7 +373,7 @@ def cos_similarity(model_name:str, exp_tensor: torch.tensor, prompting_technique
             avg_cosine = 0
         else:
             avg_cosine = sum(cos_per_token) / len(cos_per_token)
-        print(avg_cosine)
+        #print(avg_cosine)
         cos_dictionary[prompt_key] = avg_cosine 
     return cos_dictionary
 
