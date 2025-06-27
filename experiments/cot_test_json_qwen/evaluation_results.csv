@@ -1,0 +1,3 @@
+prompt_id,entropy,latency,tokens_used,correct,llm_answer,ground_truth,avg_au,avg_eu,cosine
+prompt6,0.0,41.74973917007446,177,yes,260,260,0.0,0.0256195068359375,1.0
+prompt8,0.0,73.58326268196106,284,yes,45,45,0.0,0.0240478515625,1.0
