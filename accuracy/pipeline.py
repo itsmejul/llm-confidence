@@ -169,19 +169,19 @@ if __name__ == "__main__":
     print(f"Metadata saved to {metadata_file}")
     del metadata #free up memory
 
+    
     system_prompt = ''
-    #with open(f"few_shot_examples/gsm8k_{prompting_technique}.yaml", "r") as f:
-    with open(f"accuracy/few_shot_examples/gsm8k_{prompting_technique}.yaml", "r") as f: #TODO path
+    with open(f"accuracy/few_shot_examples/gsm8k_{prompting_technique}.yaml", "r") as f:
             prompt_examples = yaml.safe_load(f)
     #system_prompt += "Format:" + prompt_examples['format'] #TODO maybe uncomment again
     for example in prompt_examples['fewshot']:
-        system_prompt += "Q: " + example["question"]
-        system_prompt += "A:" + example["answer"]
+        system_prompt += example["question"]
+        system_prompt += example["answer"] + "\n"
     system_prompt += prompt_examples["system_prompt"]
-    
+
     print("Starting to generate...")
     for i,question in enumerate(questions):
-        prompt = system_prompt + "Q: " + question
+        prompt = system_prompt + question
         #print(prompt)
         answer = answers[i]
 

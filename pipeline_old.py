@@ -131,7 +131,7 @@ if __name__ == "__main__":
     del metadata #free up memory
 
     system_prompt = ''
-    with open(f"few_shot_examples/gsm8k_{prompting_technique}.yaml", "r") as f:
+    with open(f"accuracy/few_shot_examples/gsm8k_{prompting_technique}.yaml", "r") as f:
             prompt_examples = yaml.safe_load(f)
     #system_prompt += "Format:" + prompt_examples['format'] #TODO maybe uncomment again
     for example in prompt_examples['fewshot']:
