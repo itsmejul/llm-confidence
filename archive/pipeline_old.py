@@ -24,7 +24,8 @@ parser.add_argument('--experiment_name',default='llama3_test_json',type=str,
 parser.add_argument('--n_samples',default=1,type=int,
     help='n_samples: Number of articles from the dataset')
 parser.add_argument('--start_index',default='0',type=int,
-    help='start_index: Start index which the dataset questions will be split') parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3-8B', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf, mistralai/Mistral-7B-v0.1, deepseek-ai/deepseek-llm-7b-base
+    help='start_index: Start index which the dataset questions will be split') 
+parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3-8B', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf, mistralai/Mistral-7B-v0.1, deepseek-ai/deepseek-llm-7b-base
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
