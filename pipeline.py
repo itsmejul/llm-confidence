@@ -174,7 +174,7 @@ if __name__ == "__main__":
     print("Starting to generate...")
     for i,question in enumerate(questions):
         prompt = system_prompt + question
-        print(prompt)
+        #print(prompt)
         answer = answers[i]
 
         torch.cuda.empty_cache()
