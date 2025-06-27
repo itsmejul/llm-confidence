@@ -82,11 +82,6 @@ def generate_with_top_p(
         #Check breaking conditions
         if eos_token_id is not None and int(chosen_token) == eos_token_id:
             break
-        elif any(stop_seq in chosen_tokens for stop_seq in ["<eos>", "\n\n", "Q:", "more examples"]):
-            break
-        # Also check if we have a complete answer
-        elif re.search(r'A:\s*[\d\.]+\s*<eos>', chosen_tokens):
-            break
         #valid json format detected -> stop
         elif re.search(r'\{\s*["\']answer["\']\s*:\s*[-]?\d+(\.\d+)?\s*\}', chosen_tokens):
             break
