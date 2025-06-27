@@ -1,0 +1,9 @@
+{
+    "model": "deepseek-ai/deepseek-llm-7b-base",
+    "dataset": "openai/gsm8k",
+    "device": "cuda",
+    "experiment_name": "all_baseline_deepseek",
+    "tokens_per_response": 30,
+    "prompting_technique": "baseline",
+    "top_p": 0.95
+}

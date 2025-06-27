@@ -19,15 +19,19 @@ import os
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--n_samples',default=300,type=int,
+parser.add_argument('--experiment_name',default='llama3_test_json',type=str,
+    help='experiment_name: Sets the name of the experiment, which will be saved in the experiments/ directory under that name.')
+parser.add_argument('--n_samples',default=1,type=int,
     help='n_samples: Number of articles from the dataset')
-parser.add_argument('--model_name', default='meta-llama/Llama-3.1-8B-Instruct', type=str,#meta-llama/Llama-3.1-8B-Instruct # Qwen/Qwen3-8B
+parser.add_argument('--start_index',default='0',type=int,
+    help='start_index: Start index which the dataset questions will be split')
+parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3-8B', type=str,#meta-llama/Meta-Llama-3-8B # Qwen/Qwen3-8B, meta-llama/Llama-2-7b-hf, mistralai/Mistral-7B-v0.1, deepseek-ai/deepseek-llm-7b-base
     help='model_name: Name or path of the huggingface LLM model to use.')
 parser.add_argument('--dataset', default='openai/gsm8k', type=str,
     help='Name or path of huggingface dataset to use.')
 parser.add_argument('--device', default=device_default, type=str,
     help='Device (cuda, cpu, auto).')
-parser.add_argument('--tokens_per_response', default=800, type=int,
+parser.add_argument('--tokens_per_response', default=15, type=int,
     help='Generate n tokens in each response and then cut off')
 parser.add_argument('--reasoning_qwen', action='store_true',
                     help="Use reasoning mode for qwen3-8b.")
@@ -108,48 +112,39 @@ if __name__ == "__main__":
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
     full_results_data = {}
-    correct = 0 #using for accuracy
-    for i in range(n_samples):
-        if verbose:
-            print(f"\n Question {i}")
-        example = dataset[i]
-        question = example["question"]
+    metadata = {"model": model_name, "dataset": dataset_name, "device": device, "experiment_name": experiment_name,
+                 "tokens_per_response": tokens_per_response, "prompting_technique":prompting_technique, "top_p": top_p}
 
-        #############################
-        prompt = f''' You are a math expert. Solve the question which is below delimited by triple quotes.
-            When you’re done, respond **only** with valid JSON of the form  
-            {{"answer": <float>}}  
-            Question: """{question}"""
-            '''
-        
-        if "qwen3-8b" in str(args.model_name).lower():
-            if verbose:
-                print("Using qwen3-8b,", end="")
-            messages = [{"role": "user", "content": prompt}]
-            if reasoning_qwen is True:
-                if verbose:
-                    print(f"with reasoning: {reasoning_qwen}.")
-                text = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-                enable_thinking=True # Switches between thinking and non-thinking modes. Default is True.
-                )
-            else:
-                if verbose:
-                    print(f"with reasoning: {reasoning_qwen}.")
-                text = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-                enable_thinking=False # Switches between thinking and non-thinking modes. Default is True.
-                )
-            prompt = text
-        #############################
-        
-        if verbose:
-            print(f"{prompt=}")
-        answer = example["answer"]
+
+    #creat experiment directory
+    dir_path = os.path.join("experiments", experiment_name)
+    os.makedirs(dir_path, exist_ok=True)
+
+    #save metadata
+    if rerun_buggy_samples == "yes":
+        metadata_file = os.path.join(dir_path, f"rerun_metadata.json")
+    else:
+        metadata_file = os.path.join(dir_path, f"metadata.json")
+    with open(metadata_file, "w") as f:
+        json.dump(metadata, f, indent=4)
+    print(f"Metadata saved to {metadata_file}")
+    del metadata #free up memory
+
+    system_prompt = ''
+    with open(f"few_shot_examples/gsm8k_{prompting_technique}.yaml", "r") as f:
+            prompt_examples = yaml.safe_load(f)
+    #system_prompt += "Format:" + prompt_examples['format'] #TODO maybe uncomment again
+    for example in prompt_examples['fewshot']:
+        system_prompt += example["question"]
+        system_prompt += example["answer"] + "\n"
+    system_prompt += prompt_examples["system_prompt"]
+    
+    print("Starting to generate...")
+    for i,question in enumerate(questions):
+        prompt = system_prompt + question
+        #print(prompt)
+        answer = answers[i]
+
         torch.cuda.empty_cache()
         with torch.no_grad():
             #res = generate_with_top_p(model=model, tokenizer=tokenizer, prompt=prompt, p=0.9, max_tokens=tokens_per_response, device=device)

@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Parse Arguments
 #==========
 parser = argparse.ArgumentParser(description='Args for experiments')
-parser.add_argument('--experiment_name',default='test_cot_llama3',type=str,
+parser.add_argument('--experiment_name',default='all_baseline_deepseek',type=str,
     help='experiment_name: Selects the experiment which will be evaluated')
 parser.add_argument('--rerun',default='no',type=str,
     help='If it is set to "yes" then search for reurn file instead of output file tensor.')

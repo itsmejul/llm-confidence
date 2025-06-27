@@ -117,20 +117,19 @@ def generate_with_top_p(
         decoded_chosen_token = tokenizer.decode(chosen_token)
         chosen_tokens += decoded_chosen_token
 
-        if eos_token_id is not None and int(chosen_token) == eos_token_id:
-            break
-        elif any(stop_seq in chosen_tokens for stop_seq in ["<eos>", "\n\n", "Q:", "more examples"]):
-            break
-        # Also check if we have a complete answer
-        elif re.search(r'A:\s*[\d\.]+\s*<eos>', chosen_tokens):
-            break
-
         # Record
         generated.append(chosen_token)
 
         top_p_tokens.append(top_indices.cpu())
         top_p_logits.append(top_logits.cpu())
         top_p_probs.append(top_probs.cpu())
+
+        #Check breaking conditions
+        if eos_token_id is not None and int(chosen_token) == eos_token_id:
+            break
+        #valid json format detected -> stop
+        elif re.search(r'\{\s*["\']answer["\']\s*:\s*[-]?\d+(\.\d+)?\s*\}', chosen_tokens):
+            break
 
         # Append for next step
         input_ids = torch.cat([input_ids, chosen_token.unsqueeze(0)], dim=-1)
