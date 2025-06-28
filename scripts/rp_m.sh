@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=rerun_deepseek_baseline
+#SBATCH --job-name=rerun_llama3_baseline
 #SBATCH --partition=paula
 #SBATCH --gpus=a30
 #SBATCH --ntasks=1
@@ -25,4 +25,4 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/accuracy/pipeline.py --experiment_name="all_baseline_deepseek" --n_samples=-1 --start_index=0 --model_name="deepseek-ai/deepseek-llm-7b-base" --device="cuda" --tokens_per_response=30 --prompting_technique="baseline" --rerun_buggy_samples="yes"
+python /home/sc.uni-leipzig.de/ag52peve/dev/math-ml/accuracy/pipeline.py --experiment_name="all_baseline_llama3" --n_samples=-1 --start_index=0 --model_name="meta-llama/Meta-Llama-3-8B" --device="cuda" --tokens_per_response=30 --prompting_technique="baseline" --rerun_buggy_samples="yes"
