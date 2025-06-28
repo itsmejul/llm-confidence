@@ -7,6 +7,7 @@ import sys
 sys.stdout.reconfigure(line_buffering=True)
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from datetime import datetime
 #==========
 # Parse Arguments
 #==========
@@ -36,6 +37,8 @@ prompting_technique = metadata['prompting_technique']
 #==========
 # Result Tensor
 #==========
+#TODO bug here I think, second rerun tensor not loaded 
+
 if rerun == "yes":
      reruns = []
      for filename in os.listdir(experiment_path):
@@ -46,6 +49,9 @@ if rerun == "yes":
      
      # Load original output tensor
      results = torch.load(output_tensor_path)
+
+     # Sort by timestamp extracted from filenames, merge old first, move to newer
+     reruns.sort(key=lambda path: datetime.strptime(path.split("/")[-1].replace("rerun_output_", "").replace(".pt", ""), "%Y-%m-%d_%H-%M"))
 
      # Load and merge rerun results
      for rerun_path in reruns:
