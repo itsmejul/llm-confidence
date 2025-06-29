@@ -1,5 +1,5 @@
 {
-    "model": "deepseek-ai/deepseek-llm-7b-base",
+    "model": "Qwen/Qwen3-8B",
     "dataset": "openai/gsm8k",
     "device": "cuda",
     "experiment_name": "all_cod_deepseek",
