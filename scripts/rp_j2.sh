@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=test_llama3
-#SBATCH --partition=paula
-#SBATCH --gpus=a30
+#SBATCH --partition=clara
+#SBATCH --gpus=v100
 #SBATCH --ntasks=1
 #SBATCH --mem=24G
-#SBATCH --time=02:30:00
+#SBATCH --time=24:00:00
 #SBATCH -o /home/sc.uni-leipzig.de/gr15iped/jobfiles/log/%x.out-%j
 #SBATCH -e /home/sc.uni-leipzig.de/gr15iped/jobfiles/log/%x.err-%j
 
@@ -25,4 +25,4 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/accuracy/pipeline.py --experiment_name="test_llama3" --n_samples=10 --start_index=0 --model_name="meta-llama/Meta-Llama-3.1-8B" --device="cuda" --tokens_per_response=30 --prompting_technique="baseline" --rerun_buggy_samples="no"
+python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/accuracy/pipeline.py --experiment_name="all_cod_llama3" --n_samples=-1 --start_index=0 --model_name="meta-llama/Meta-Llama-3.1-8B" --device="cuda" --tokens_per_response=30 --prompting_technique="cod" --rerun_buggy_samples="no"
