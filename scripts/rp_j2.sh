@@ -25,4 +25,4 @@ else
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True #reduce memory reserved for pytorch but unallocated
-python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/accuracy/pipeline.py --experiment_name="all_cod_llama3" --n_samples=-1 --start_index=0 --model_name="meta-llama/Meta-Llama-3.1-8B" --device="cuda" --tokens_per_response=30 --prompting_technique="cod" --rerun_buggy_samples="no"
+python /home/sc.uni-leipzig.de/gr15iped/dev/math-ml/accuracy/pipeline.py --experiment_name="all_cod_deepseek" --n_samples=-1 --start_index=0 --model_name="deepseek-ai/deepseek-llm-7b-base" --device="cuda" --tokens_per_response=30 --prompting_technique="cod" --rerun_buggy_samples="no"
