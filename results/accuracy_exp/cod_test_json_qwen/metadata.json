@@ -1,9 +1,0 @@
-{
-    "model": "Qwen/Qwen3-8B",
-    "dataset": "openai/gsm8k",
-    "device": "cuda",
-    "experiment_name": "cod_test_json_qwen",
-    "tokens_per_response": 1000,
-    "prompting_technique": "cod",
-    "top_p": 0.95
-}

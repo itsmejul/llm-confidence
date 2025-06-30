@@ -1,9 +1,0 @@
-{
-    "model": "meta-llama/Meta-Llama-3.1-8B",
-    "dataset": "openai/gsm8k",
-    "device": "cuda",
-    "experiment_name": "all_cod_llama3",
-    "tokens_per_response": 30,
-    "prompting_technique": "cod",
-    "top_p": 0.95
-}
