@@ -70,6 +70,7 @@ Pygments==2.19.2
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
+<<<<<<< HEAD
 pytz==2025.2
 PyYAML==6.0.2
 pyzmq==27.0.0
@@ -96,3 +97,16 @@ urllib3==2.5.0
 wcwidth==0.2.13
 xxhash==3.5.0
 yarl==1.20.1
+=======
+transformers>=4.51
+torch>=2.7
+datasets>=3.5
+huggingface_hub>=0.30
+pandas>=2.2
+numpy>=2.2
+accelerate>=1.6
+matplotlib>=3.10
+scikit-learn>=1.7
+protobuf>=6.31.1
+sentencepiece>=0.2.0
+>>>>>>> 22424f1 (requirements for instruct model)
