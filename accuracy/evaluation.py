@@ -37,8 +37,7 @@ prompting_technique = metadata['prompting_technique']
 #==========
 # Result Tensor
 #==========
-#TODO bug here I think, second rerun tensor not loaded 
-
+print("Loading tensors...")
 if rerun == "yes":
      reruns = []
      for filename in os.listdir(experiment_path):
