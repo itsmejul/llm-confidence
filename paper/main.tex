@@ -3,23 +3,46 @@
 \usepackage{geometry}     % better margins
 \usepackage{longtable}    % support long tables (if needed)
 \usepackage{caption}      % better table captions
+\usepackage{multirow}
 
 \geometry{margin=1in}
 
-\title{Correlation Statistics for Model–Dataset Pairs}
+\title{}
 \date{}
 
 \begin{document}
 
 \maketitle
 
-\section{Correlation between token entropy and semantic similarity of tokens}
+\section{Abstract}
+A major issue with Large Language Models (LLMs) is their tendency to hallucinate incorrect answers.
+For this reason, several metrics have been devised in the attempt to measure how certain a model is 
+in its answer, or how likely a answer is correct. One such measure is the token distribution entropy.  
+In this work, we propose a new measure, the \textbf{S}emantic \textbf{To}ken Top-\textbf{P} \textbf{S}imilarity
+ (STOPS). We observe a moderate to strong inverse correlation between entropy and STOPS. Furthermore, we evaluate the 
+ suitability of classifiers based on entropy and STOPS for predicting model answer accuracy. 
+ We support all of our findings through extensive experiments conducted on a multitude of datasets, models and prompting approaches.
+
+ \section{Introduction}
+
+ \section{Related Work}
+
+ \section{Methodology}
+
+ \section{Results}
+
+
+ \section{Correlation between token entropy and semantic similarity of tokens}
 The entropy of token probability distributions has been proposed as a measure for LLM uncertainty.
 We propose a new uncertainty measure, which is the average pairwise cosine similarity of the top-p tokens of a probability distribution.
 In the following, we will show that there is a inverse relationship
 
-\section*{Table: Pearson and Spearman Correlations}
+\input{../results/correlation_eval/correlation_stats_simplified.tex}
 \input{../results/correlation_eval/correlation_stats.tex}
+
+\section{Future Work}
+Especially for the accuracy analysis, it is still open to perform it on more datasets and perhaps 
+find a dataset where the cosine is a stronger indicator than entropy.
 
 \end{document}
 % related work paper
