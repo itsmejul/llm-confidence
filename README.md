@@ -1,7 +1,7 @@
-# Semantic Token Top-p Similarity as an LLM uncertainty measure
-This repository contains the code for our research project which is part of the Math&ML project. We propose a new measure for LLM uncertainty, the **S**emantic **To**ken top-**P** **S**imilarity (STOPS). 
-We explore how this measure correlates with token entropy, an exisiting uncertainty measure. 
-Furthermore, we analyze how STOPS is related to model performance and create a classification model to predict model answer correctness based on STOPS and entropy. 
+# Quantifying LLM confidence using probabilistic and semantic metrics
+This repository contains the code for our research project which is part of the Math&ML class. In this project, we examine different ways to quantify LLM confidence during inference.
+We propose a new measure for LLM uncertainty, the top-p token semantic similarity, and explore how this measure correlates with token entropy, an exisiting uncertainty measure. 
+Furthermore, we analyze how these metrics are related to model performance and how they are affected by different prompting approaches.
 We solidify our findings by reproducing the results over a variety of datasets, models, and propting approaches.
 
 # Contents
@@ -54,17 +54,12 @@ python correlation/correlation_eval.py
 
 This will create the plots of all models-dataset combinations and save them in ```results/correlation_eval/correlation.png```. Also, it will calculate Pearson and Spearman correlation scores and save them in the same directory as both .csv and .tex files for easy further use. 
 
-## Model fitting
-Currently, this happens in the ```correlation.ipynb``` notebook, but later this will be moved into the ```correlation_eval.py``` file. 
-We fit a unimodal model to each of the model-dataset plots medians. 
-Later, we will then fit a linear model on the correlation between that model and the cosines, to see how well that model fits the cosine scores.
-
 # Accuracy analysis over prompting techniques and entropy and cosine
 <div style="display: flex; gap: 20px;">
   <img src="results/accuracy_exp/llama2_cot_all/cosine_violin.png" alt="Cosine Accuracy Violin" style="width: 48%;">
   <img src="results/accuracy_exp/llama2_cot_all/entropy_violin.png" alt="Entropy Accuracy Violin" style="width: 48%;">
 </div>
-We analyze the performance of different LLMs on the GSM8K benchmark with respect to different prompting methods, and how the token entropy and cosines are related to the performance.
+We analyze the performance of different LLMs on the GSM8K benchmark with respect to different prompting methods, and how the token entropy and cosine similarity scores are related to the performance.
 
 ## Recreating results
 First, create a virtual environment using ```requirements.txt```, for example:
@@ -97,7 +92,7 @@ python accuracy/evaluation.py \
 ```
 This will read the results from the ```.pt``` tensor and save the relevant metrics per prompt in ```results/accuracy_exp/<experiment_name>/evaluation_results.csv```.  
 It will also create a summary of the evalution with important averages and computed metrics, which will be stored in ```results/accuracy_exp/<experiment_name>/evaluation_summary.json```.  
-In order to create the violin plots, we just run the ```accuracy/violin_plots.ipynb``` notebook. Later, this should be integrated into ```evaluation.py```.  
+In order to create the violin plots, we just run the ```accuracy/violin_plots.ipynb``` notebook.  
 Additionally, a ```buggy_prompts_to_rerun.csv``` file is generated (see below).
 
 #### Reruns
@@ -127,10 +122,9 @@ In our experiments, we used the following models:
 * meta-llama/Meta-Llama-3-8B
 * deepseek-ai/deepseek-llm-7b-base  
 
-We evaluated all responses using few-shot prompting with three different prompting techniques:
+We evaluated all responses using few-shot prompting with two different prompting techniques:
 * Baseline
 * Chain-of-thought
-* Chain-of-draft
 
 Each experiment was conducted using the full test split of the gsm8k dataset (minus the prompts that generated invalid answers, since it's not possible to extract answer token distributions from those).
 
@@ -140,6 +134,3 @@ For each experiment in ```results/accuracy_exp/```, we store the following:
 * ```logtoku_quadrants.png```: Contains quadrant visualization of epistemic and aleatoric uncertainy
 * ```cosine_half_violin.png```: contains violin plot for cosine distribution
 * ```entropy_half_violin.png```: contains violin plot for entropy distribution  
-
-## Model fitting
-We want to create a prediction model to predict answer correctness based on entropy and cosine scores. For this, we will calculate a threshold and classify all samples above the threshold as correct, and samples below the threshold as incorrect. (This is yet to be implemented). Then, we will do a significance test to see how significant the prediction scores are.
