@@ -55,8 +55,8 @@ This will create the plots of all models-dataset combinations and save them in `
 
 # Accuracy analysis over prompting techniques and entropy and cosine
 <div style="display: flex; gap: 20px;">
-  <img src="results/accuracy_exp/llama2_cot_all/cosine_violin.png" alt="Cosine Accuracy Violin" style="width: 48%;">
-  <img src="results/accuracy_exp/llama2_cot_all/entropy_violin.png" alt="Entropy Accuracy Violin" style="width: 48%;">
+  <img src="results/accuracy_exp/all_cot_llama2/cosine_violin.png" alt="Cosine Accuracy Violin" style="width: 48%;">
+  <img src="results/accuracy_exp/all_cot_llama2/entropy_violin.png" alt="Entropy Accuracy Violin" style="width: 48%;">
 </div>
 We analyze the performance of different LLMs on the GSM8K benchmark with respect to different prompting methods, and how the token entropy and cosine similarity scores are related to the performance.
 
