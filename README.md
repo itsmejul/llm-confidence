@@ -15,7 +15,7 @@ We analyze the correlation between the entropy of each tokens probability distri
 ![Plots of correlation](results/correlation_eval/correlation.png)
 
 ## Recreating results
-First, you need to create a python environment based on the ```requirements.txt``` file, for example:
+First, we need to create a python environment based on the ```requirements.txt``` file, for example:
 ```
 python -m venv .venv && \
     source .venv/bin/activate && \
@@ -23,7 +23,7 @@ python -m venv .venv && \
 ```
 To recreate the results of the correlation analysis between entropy and cosine similarity, run the ```correlation_pipeline``` with any compatible model and dataset name, e.g: 
 ```
-python correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llama-3.1-8B"
+python correlation/correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llama-3.1-8B"
 ```
 This will create a .pt file in ```results/correlation_exp/<dataset_name>/<model_name>```, which contains all necessary results (token entropies & cosines).
 These can later be loaded for the data analysis and visualization.  
