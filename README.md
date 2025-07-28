@@ -2,7 +2,7 @@
 This repository contains the code for our research project which is part of the Math&ML class. In this project, we examine different ways to quantify LLM confidence during inference.
 We propose a new measure for LLM uncertainty, the top-p token semantic similarity, and explore how this measure correlates with token entropy, an exisiting uncertainty measure. 
 Furthermore, we analyze how these metrics are related to model performance and how they are affected by different prompting approaches.
-We solidify our findings by reproducing the results over a variety of datasets, models, and propting approaches.
+We solidify our findings by reproducing the results over a variety of datasets, models, and prompting approaches.
 
 # Contents
 - [Correlation between entropy and semantic similarity](#correlation-analysis-between-entropy-and-cosine-similarity)
