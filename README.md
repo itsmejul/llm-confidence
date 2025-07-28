@@ -27,7 +27,6 @@ python correlation_pipeline.py --dataset_name=xsum --model_name="meta-llama/Llam
 ```
 This will create a .pt file in ```results/correlation_exp/<dataset_name>/<model_name>```, which contains all necessary results (token entropies & cosines).
 These can later be loaded for the data analysis and visualization.  
-We also provide a convenience script to run this on a HPC cluster; the script is located in ```scripts/rcp.sh```.
 
 ## Models and Datasets
 We used five different LLM models for this experiment (though most other models that are loaded as AutoModelForCausalLM using huggingface transformers should work fine as well): 
